@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/adrienaury/mimo/pkg/mimo"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -39,11 +40,51 @@ var (
 	builtBy   string //nolint: gochecknoglobals
 )
 
+//nolint:gomnd
 func main() {
 	//nolint: exhaustruct
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	log.Info().Msgf("%v %v (commit=%v date=%v by=%v)", name, version, commit, buildDate, builtBy)
 
+	realData := &Test{
+		data: []mimo.DataRow{
+			{"name": "Adrien", "age": 12},
+			{"name": "Youen", "age": 12},
+			{"name": nil, "age": 12},
+		},
+		index: 0,
+	}
+
+	maskedData := &Test{
+		data: []mimo.DataRow{
+			{"name": "Charles", "age": 12},
+			{"name": "Youen", "age": 50},
+			{"name": nil, "age": 12},
+		},
+		index: 0,
+	}
+
+	driver := mimo.NewDriver()
+	if report, err := driver.Analyze(realData, maskedData); err != nil {
+		log.Fatal().AnErr("error", err).Msg("end of program")
+	} else {
+		report.Print()
+	}
+
 	fmt.Println()
+}
+
+type Test struct {
+	data  []mimo.DataRow
+	index int
+}
+
+func (t *Test) ReadDataRow() (mimo.DataRow, error) {
+	t.index++
+	if t.index > len(t.data) {
+		return nil, nil
+	}
+
+	return t.data[t.index-1], nil
 }
