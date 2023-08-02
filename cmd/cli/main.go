@@ -26,8 +26,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/adrienaury/go-template/internal/helloservice"
-	"github.com/adrienaury/go-template/pkg/nameservice"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -47,6 +45,5 @@ func main() {
 
 	log.Info().Msgf("%v %v (commit=%v date=%v by=%v)", name, version, commit, buildDate, builtBy)
 
-	fmt.Printf("%s", helloservice.Hello(nameservice.GetName()))
 	fmt.Println()
 }
