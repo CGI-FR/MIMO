@@ -69,7 +69,7 @@ func main() {
 	if report, err := driver.Analyze(realData, maskedData); err != nil {
 		log.Fatal().AnErr("error", err).Msg("end of program")
 	} else {
-		report.Print()
+		Print(report)
 	}
 
 	fmt.Println()
@@ -87,4 +87,13 @@ func (t *Test) ReadDataRow() (mimo.DataRow, error) {
 	}
 
 	return t.data[t.index-1], nil
+}
+
+func Print(r mimo.Report) {
+	fmt.Println("Metrics")
+	fmt.Println("=======")
+
+	for key, metrics := range r {
+		fmt.Println(key, metrics.MaskingRate()*100, "%") //nolint:gomnd
+	}
 }

@@ -1,8 +1,6 @@
 package mimo
 
 import (
-	"fmt"
-
 	"github.com/rs/zerolog/log"
 )
 
@@ -29,15 +27,6 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 
 		metrics.Update(realValue, maskedRow[key])
 		r[key] = metrics
-	}
-}
-
-func (r Report) Print() {
-	fmt.Println("Metrics")
-	fmt.Println("=======")
-
-	for key, metrics := range r {
-		fmt.Println(key, metrics.MaskingRate()*100, "%") //nolint:gomnd
 	}
 }
 
