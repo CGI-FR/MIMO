@@ -26,8 +26,8 @@ type Metrics struct {
 	MaskedCount int64 // Number of non-blank real values masked
 }
 
-func NewMetrics() *Metrics {
-	return &Metrics{TotalCount: 0, BlankCount: 0, MaskedCount: 0}
+func NewMetrics() Metrics {
+	return Metrics{TotalCount: 0, BlankCount: 0, MaskedCount: 0}
 }
 
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
@@ -49,23 +49,23 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 //
 //	Number of non-blank real values masked
 //	  / (Number of values analyzed - Number of blank (null or empty) values in real data) ).
-func (m *Metrics) MaskingRate() float64 {
+func (m Metrics) MaskingRate() float64 {
 	return float64(m.MaskedCount) / float64(m.TotalCount-m.BlankCount)
 }
 
 type Report struct {
-	metrics map[string]*Metrics
+	metrics map[string]Metrics
 	subs    Suscribers
 }
 
 func NewReport(subs []EventSubscriber) Report {
-	return Report{make(map[string]*Metrics), subs}
+	return Report{make(map[string]Metrics), subs}
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
-		metrics := r.metrics[key]
-		if metrics == nil {
+		metrics, exists := r.metrics[key]
+		if !exists {
 			metrics = NewMetrics()
 
 			r.subs.PostNewField(key)
@@ -74,4 +74,17 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 		metrics.Update(key, realValue, maskedRow[key], r.subs)
 		r.metrics[key] = metrics
 	}
+}
+
+func (r Report) Columns() []string {
+	columns := make([]string, 0, len(r.metrics))
+	for colname := range r.metrics {
+		columns = append(columns, colname)
+	}
+
+	return columns
+}
+
+func (r Report) ColumnMetric(colname string) Metrics {
+	return r.metrics[colname]
 }

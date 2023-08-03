@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/adrienaury/mimo/internal/infra"
@@ -98,9 +99,23 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		log.Fatal().Err(err).Msg("end MIMO")
 	}
 
-	driver := mimo.NewDriver()
-	if _, err := driver.Analyze(realReader, maskedReader, infra.SubscriberLogger{}); err != nil {
+	driver := mimo.NewDriver(realReader, maskedReader, infra.SubscriberLogger{})
+	if report, err := driver.Analyze(); err != nil {
 		log.Error().Err(err).Msg("end of program")
+	} else {
+		columns := report.Columns()
+		sort.Strings(columns)
+		for _, colname := range columns {
+			metrics := report.ColumnMetric(colname)
+			switch {
+			case metrics.MaskingRate() < 1 && metrics.MaskingRate() > 0:
+				log.Error().Str("field", colname).Msg("partially masked")
+			case metrics.MaskingRate() == 1:
+				log.Info().Str("field", colname).Msg("totally masked")
+			case metrics.MaskingRate() == 0:
+				log.Warn().Str("field", colname).Msg("not masked")
+			}
+		}
 	}
 }
 

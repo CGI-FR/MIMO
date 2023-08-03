@@ -6,24 +6,32 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Driver struct{}
-
-func NewDriver() Driver {
-	return Driver{}
+type Driver struct {
+	realDataSource DataRowReader
+	maskDataSource DataRowReader
+	subscribers    Suscribers
+	report         Report
 }
 
-func (a Driver) Analyze(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) (Report, error) {
-	report := NewReport(subs)
+func NewDriver(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) Driver {
+	return Driver{
+		realDataSource: realReader,
+		maskDataSource: maskedReader,
+		subscribers:    subs,
+		report:         NewReport(subs),
+	}
+}
 
+func (d Driver) Analyze() (Report, error) {
 	for {
-		realRow, err := realReader.ReadDataRow()
+		realRow, err := d.realDataSource.ReadDataRow()
 		if err != nil {
-			return report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
+			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
 
-		maskedRow, err := maskedReader.ReadDataRow()
+		maskedRow, err := d.maskDataSource.ReadDataRow()
 		if err != nil {
-			return report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
+			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
 
 		if realRow == nil && maskedRow == nil {
@@ -31,13 +39,13 @@ func (a Driver) Analyze(realReader DataRowReader, maskedReader DataRowReader, su
 		}
 
 		if realRow == nil || maskedRow == nil {
-			return report, ErrOrphanRow
+			return d.report, ErrOrphanRow
 		}
 
 		log.Trace().Interface("real", realRow).Interface("masked", maskedRow).Msg("read rows")
 
-		report.Update(realRow, maskedRow)
+		d.report.Update(realRow, maskedRow)
 	}
 
-	return report, nil
+	return d.report, nil
 }

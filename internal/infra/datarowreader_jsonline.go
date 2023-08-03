@@ -3,6 +3,7 @@ package infra
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -11,7 +12,7 @@ import (
 )
 
 type DataRowReaderJSONLine struct {
-	input  io.Reader
+	input  *bufio.Scanner
 	output io.Writer
 }
 
@@ -21,29 +22,32 @@ func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, 
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &DataRowReaderJSONLine{input: source, output: os.NewFile(0, os.DevNull)}, nil
+	return &DataRowReaderJSONLine{input: bufio.NewScanner(source), output: io.Discard}, nil
 }
 
 func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderJSONLine {
-	return &DataRowReaderJSONLine{input: input, output: output}
+	return &DataRowReaderJSONLine{input: bufio.NewScanner(input), output: output}
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
-	reader := bufio.NewReader(drr.input)
+	var data mimo.DataRow
 
-	jsondata, err := reader.ReadBytes('\n')
-	if err != nil {
-		if err == io.EOF {
+	if drr.input.Scan() {
+		if _, err := drr.output.Write(append(drr.input.Bytes(), '\n')); err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+
+		data = mimo.DataRow{}
+		if err := json.Unmarshal(drr.input.Bytes(), &data); err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+	}
+
+	if err := drr.input.Err(); err != nil {
+		if errors.Is(err, io.EOF) {
 			return nil, nil
 		}
 
-		return nil, fmt.Errorf("%w", err)
-	}
-
-	drr.output.Write(append(jsondata, '\n'))
-
-	data := mimo.DataRow{}
-	if err := json.Unmarshal(jsondata, &data); err != nil {
 		return nil, fmt.Errorf("%w", err)
 	}
 
