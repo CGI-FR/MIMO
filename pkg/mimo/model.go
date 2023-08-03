@@ -35,11 +35,12 @@ func NewMetrics() *Metrics {
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
 	log.Trace().Interface("real", realValue).Interface("masked", maskedValue).Msg("update metric")
 
-	if realValue == nil {
+	switch {
+	case realValue == nil:
 		m.BlankCount++
-	} else if realValue != maskedValue {
+	case realValue != maskedValue:
 		m.MaskedCount++
-	} else if m.MaskedCount == (m.TotalCount - m.BlankCount) {
+	case m.MaskedCount == (m.TotalCount - m.BlankCount):
 		subs.PostFirstNonMaskedValue(fieldname, realValue)
 	}
 

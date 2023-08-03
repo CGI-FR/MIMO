@@ -58,12 +58,12 @@ func (p *DataRowPipe) ReadDataRow() (mimo.DataRow, error) {
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	data := mimo.DataRow{}
 	if err := json.Unmarshal(jsondata, &data); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	return data, nil
@@ -71,7 +71,7 @@ func (p *DataRowPipe) ReadDataRow() (mimo.DataRow, error) {
 
 func (p *DataRowPipe) Write(bytes []byte) error {
 	if _, err := p.pipe.Write(bytes); err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil

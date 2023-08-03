@@ -3,6 +3,7 @@ package infra
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/adrienaury/mimo/pkg/mimo"
@@ -20,14 +21,14 @@ func (s *DataRowScanner) ReadDataRow() (mimo.DataRow, error) {
 	if s.Scan() {
 		data := mimo.DataRow{}
 		if err := json.Unmarshal(s.Bytes(), &data); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%w", err)
 		}
 
 		return data, nil
 	}
 
 	if err := s.Err(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w", err)
 	}
 
 	return nil, nil
