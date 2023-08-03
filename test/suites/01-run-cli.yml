@@ -4,6 +4,6 @@ name: run cli
 testcases:
   - name: no arguments
     steps:
-      - script: cli
+      - script: mimo --help
         assertions:
           - result.code ShouldEqual 0
