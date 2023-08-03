@@ -28,7 +28,7 @@ func NewReportExporter() ReportExporter {
 
 func (e ReportExporter) Export(report mimo.Report, filename string) error {
 	if file, err := os.Create(filename); err != nil {
-		return err
+		return fmt.Errorf("%w", err)
 	} else if err := e.tmpl.Execute(file, report); err != nil {
 		return fmt.Errorf("%w", err)
 	}

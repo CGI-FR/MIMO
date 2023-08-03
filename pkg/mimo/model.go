@@ -46,17 +46,17 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 	m.TotalCount++
 }
 
-// BlankCount is the number of blank (null or empty) values in real data
+// BlankCount is the number of blank (null or empty) values in real data.
 func (m Metrics) BlankCount() int64 {
 	return m.NilCount + m.EmptyCount
 }
 
-// NonBlankCount is the number of non-blank (non-null and non-empty) values in real data
+// NonBlankCount is the number of non-blank (non-null and non-empty) values in real data.
 func (m Metrics) NonBlankCount() int64 {
 	return m.TotalCount - m.BlankCount()
 }
 
-// NonMaskedCount is the number of non-blank (non-null and non-empty) values in real data that were not masked
+// NonMaskedCount is the number of non-blank (non-null and non-empty) values in real data that were not masked.
 func (m Metrics) NonMaskedCount() int64 {
 	return m.TotalCount - m.MaskedCount
 }
