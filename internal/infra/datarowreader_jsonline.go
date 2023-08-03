@@ -11,24 +11,25 @@ import (
 )
 
 type DataRowReaderJSONLine struct {
-	source io.Reader
+	input  io.Reader
+	output io.Writer
 }
 
 func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, error) {
 	source, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &DataRowReaderJSONLine{source}, nil
+	return &DataRowReaderJSONLine{input: source, output: os.NewFile(0, os.DevNull)}, nil
 }
 
-func NewDataRowReaderJSONLine(source io.Reader) *DataRowReaderJSONLine {
-	return &DataRowReaderJSONLine{source}
+func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderJSONLine {
+	return &DataRowReaderJSONLine{input: input, output: output}
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
-	reader := bufio.NewReader(drr.source)
+	reader := bufio.NewReader(drr.input)
 
 	jsondata, err := reader.ReadBytes('\n')
 	if err != nil {
@@ -38,6 +39,8 @@ func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
 
 		return nil, fmt.Errorf("%w", err)
 	}
+
+	drr.output.Write(append(jsondata, '\n'))
 
 	data := mimo.DataRow{}
 	if err := json.Unmarshal(jsondata, &data); err != nil {
