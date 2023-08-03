@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/adrienaury/mimo/internal/infra"
 	"github.com/rs/zerolog"
@@ -35,8 +34,6 @@ func main() {
 	pipe := infra.CreateDataRowPipeWriter("/tmp/myFifo")
 	defer pipe.Close()
 
-	defer os.Remove("/tmp/myFifo")
-
 	for scanner.Scan() {
 		if err := pipe.Write(append(scanner.Bytes(), '\n')); err != nil {
 			log.Error().Err(err).Msg("")
@@ -50,5 +47,4 @@ func main() {
 	}
 
 	fmt.Println()
-	time.Sleep(10 * time.Second)
 }

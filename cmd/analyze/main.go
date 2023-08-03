@@ -26,23 +26,17 @@ func main() {
 	log.Info().Msgf("%v %v (commit=%v date=%v by=%v)", name, version, commit, buildDate, builtBy)
 
 	pipe := infra.CreateDataRowPipeReader("/tmp/myFifo")
+	defer pipe.Close()
+	defer pipe.Remove()
+
 	input := infra.NewDataRowScanner()
 
 	driver := mimo.NewDriver()
-	if report, err := driver.Analyze(pipe, input); err != nil {
-		log.Fatal().AnErr("error", err).Msg("end of program")
+	if report, err := driver.Analyze(pipe, input, infra.SubscriberLogger{}); err != nil {
+		log.Error().Err(err).Msg("end of program")
 	} else {
-		Print(report)
+		report.Print()
 	}
 
 	fmt.Println()
-}
-
-func Print(r mimo.Report) {
-	fmt.Println("Metrics")
-	fmt.Println("=======")
-
-	for key, metrics := range r {
-		fmt.Println(key, metrics.MaskingRate()*100, "%") //nolint:gomnd
-	}
 }

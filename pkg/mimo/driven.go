@@ -7,3 +7,8 @@ type DataRowReader interface {
 type DataRowWriter interface {
 	WriteDataRow(row DataRow) error
 }
+
+type EventSubscriber interface {
+	NewField(fieldname string)
+	FirstNonMaskedValue(fieldname string, value any)
+}

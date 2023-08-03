@@ -12,16 +12,16 @@ func NewDriver() Driver {
 	return Driver{}
 }
 
-func (a Driver) Analyze(realRowReader DataRowReader, maskedRowReader DataRowReader) (Report, error) {
-	report := NewReport()
+func (a Driver) Analyze(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) (Report, error) {
+	report := NewReport(subs)
 
 	for {
-		realRow, err := realRowReader.ReadDataRow()
+		realRow, err := realReader.ReadDataRow()
 		if err != nil {
 			return report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
 
-		maskedRow, err := maskedRowReader.ReadDataRow()
+		maskedRow, err := maskedReader.ReadDataRow()
 		if err != nil {
 			return report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}

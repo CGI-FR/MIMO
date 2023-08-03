@@ -3,42 +3,50 @@ package infra
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"syscall"
+	"time"
 
 	"github.com/adrienaury/mimo/pkg/mimo"
 )
 
 type DataRowPipe struct {
-	pipe *os.File
+	pipe     *os.File
+	filePath string
 }
 
 func CreateDataRowPipeWriter(filePath string) *DataRowPipe {
-	os.Remove(filePath)
-
 	err := syscall.Mkfifo(filePath, 0o640) //nolint:gomnd
 	if err != nil {
 		fmt.Println("Failed to create pipe")
 		panic(err)
 	}
 
-	pipe, err := os.OpenFile(filePath, os.O_RDWR, 0o600) //nolint:gomnd
+	pipe, err := os.OpenFile(filePath, os.O_WRONLY, 0o600) //nolint:gomnd
 	if err != nil {
 		panic(err)
 	}
 
-	return &DataRowPipe{pipe}
+	return &DataRowPipe{pipe, filePath}
 }
 
 func CreateDataRowPipeReader(filePath string) *DataRowPipe {
 	pipe, err := os.OpenFile(filePath, os.O_RDONLY, 0o600) //nolint:gomnd
+
+	if errors.Is(err, os.ErrNotExist) {
+		time.Sleep(time.Second)
+
+		pipe, err = os.OpenFile(filePath, os.O_RDONLY, 0o600) //nolint:gomnd
+	}
+
 	if err != nil {
 		fmt.Println("Couldn't open pipe with error: ", err)
 	}
 
-	return &DataRowPipe{pipe}
+	return &DataRowPipe{pipe, filePath}
 }
 
 func (p *DataRowPipe) ReadDataRow() (mimo.DataRow, error) {
@@ -71,4 +79,8 @@ func (p *DataRowPipe) Write(bytes []byte) error {
 
 func (p *DataRowPipe) Close() {
 	_ = p.pipe.Close()
+}
+
+func (p *DataRowPipe) Remove() {
+	os.Remove(p.filePath)
 }

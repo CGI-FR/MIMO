@@ -1,6 +1,12 @@
 # MIMO
 
-TODO
+Sensitive and
+Personal
+Information
+Protection
+Evaluator
+
+Secure Pseudo-Anonymization Metrics
 
 ## Contributing
 
