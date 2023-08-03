@@ -25,14 +25,15 @@ func main() {
 
 	log.Info().Msgf("%v %v (commit=%v date=%v by=%v)", name, version, commit, buildDate, builtBy)
 
-	pipe := infra.CreateDataRowPipeReader("/tmp/myFifo")
-	defer pipe.Close()
-	defer pipe.Remove()
+	realReader, err := infra.NewDataRowReaderJSONLineFromFile("input.jsonl")
+	maskedReader := infra.NewDataRowReaderJSONLine(os.Stdin)
 
-	input := infra.NewDataRowScanner()
+	if err != nil {
+		log.Fatal().Err(err).Msg("end of program")
+	}
 
 	driver := mimo.NewDriver()
-	if report, err := driver.Analyze(pipe, input, infra.SubscriberLogger{}); err != nil {
+	if report, err := driver.Analyze(realReader, maskedReader, infra.SubscriberLogger{}); err != nil {
 		log.Error().Err(err).Msg("end of program")
 	} else {
 		report.Print()
