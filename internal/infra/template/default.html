@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MIMO Report</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="description" content="MIMO Report" />
+</head>
+<body>
+  <h1>MIMO Report</h1>
+  <table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+      <th>Field</th>
+      <th>Nil</th>
+      <th>Empty</th>
+      <th>Masked</th>
+      <th>Missed</th>
+      <th>Masking Rate</th>
+      <th>Collision Rate</th>
+    </thead>
+    <tbody>
+      {{ range $key, $value := .Metrics }}
+      <tr>
+        <td>{{ $key }}</td>
+        <td>{{ $value.NilCount }}</td>
+        <td>{{ $value.EmptyCount }}</td>
+        <td>{{ $value.MaskedCount }}</td>
+        <td>{{ $value.NonMaskedCount }}</td>
+        <td style="background-color: {{ if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %</td>
+        <td>TODO</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+</body>
+</html>

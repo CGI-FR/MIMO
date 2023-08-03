@@ -108,14 +108,15 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		for _, colname := range columns {
 			metrics := report.ColumnMetric(colname)
 			switch {
-			case metrics.MaskingRate() < 1 && metrics.MaskingRate() > 0:
-				log.Error().Str("field", colname).Float64("rate", metrics.MaskingRate()).Msg("partially masked")
-			case metrics.MaskingRate() == 1:
+			case metrics.MaskedRate() < 1 && metrics.MaskedRate() > 0:
+				log.Error().Str("field", colname).Float64("rate", metrics.MaskedRate()).Msg("partially masked")
+			case metrics.MaskedRate() == 1:
 				log.Info().Str("field", colname).Msg("totally masked")
-			case metrics.MaskingRate() == 0:
+			case metrics.MaskedRate() == 0:
 				log.Warn().Str("field", colname).Msg("not masked")
 			}
 		}
+		_ = infra.NewReportExporter().Export(report, "report.html")
 	}
 }
 

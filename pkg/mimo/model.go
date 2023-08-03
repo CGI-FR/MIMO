@@ -21,13 +21,14 @@ func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 }
 
 type Metrics struct {
-	TotalCount  int64 // Number of values analyzed
-	BlankCount  int64 // Number of blank (null or empty) values in real data
-	MaskedCount int64 // Number of non-blank real values masked
+	TotalCount  int64 // TotalCount is the number of values analyzed
+	NilCount    int64 // NilCount is the number of null values in real data
+	EmptyCount  int64 // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
+	MaskedCount int64 // MaskedCount is the number of non-blank real values masked
 }
 
 func NewMetrics() Metrics {
-	return Metrics{TotalCount: 0, BlankCount: 0, MaskedCount: 0}
+	return Metrics{TotalCount: 0, NilCount: 0, EmptyCount: 0, MaskedCount: 0}
 }
 
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
@@ -35,26 +36,41 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 
 	switch {
 	case realValue == nil:
-		m.BlankCount++
+		m.NilCount++
 	case realValue != maskedValue:
 		m.MaskedCount++
-	case m.MaskedCount == (m.TotalCount - m.BlankCount):
+	case m.MaskedCount == m.NonBlankCount():
 		subs.PostFirstNonMaskedValue(fieldname, realValue)
 	}
 
 	m.TotalCount++
 }
 
-// MaskingRate is equal to
+// BlankCount is the number of blank (null or empty) values in real data
+func (m Metrics) BlankCount() int64 {
+	return m.NilCount + m.EmptyCount
+}
+
+// NonBlankCount is the number of non-blank (non-null and non-empty) values in real data
+func (m Metrics) NonBlankCount() int64 {
+	return m.TotalCount - m.BlankCount()
+}
+
+// NonMaskedCount is the number of non-blank (non-null and non-empty) values in real data that were not masked
+func (m Metrics) NonMaskedCount() int64 {
+	return m.TotalCount - m.MaskedCount
+}
+
+// MaskedRate is equal to
 //
 //	Number of non-blank real values masked
 //	  / (Number of values analyzed - Number of blank (null or empty) values in real data) ).
-func (m Metrics) MaskingRate() float64 {
-	return float64(m.MaskedCount) / float64(m.TotalCount-m.BlankCount)
+func (m Metrics) MaskedRate() float64 {
+	return float64(m.MaskedCount) / float64(m.NonBlankCount())
 }
 
 type Report struct {
-	metrics map[string]Metrics
+	Metrics map[string]Metrics
 	subs    Suscribers
 }
 
@@ -64,7 +80,7 @@ func NewReport(subs []EventSubscriber) Report {
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
-		metrics, exists := r.metrics[key]
+		metrics, exists := r.Metrics[key]
 		if !exists {
 			metrics = NewMetrics()
 
@@ -72,13 +88,13 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 		}
 
 		metrics.Update(key, realValue, maskedRow[key], r.subs)
-		r.metrics[key] = metrics
+		r.Metrics[key] = metrics
 	}
 }
 
 func (r Report) Columns() []string {
-	columns := make([]string, 0, len(r.metrics))
-	for colname := range r.metrics {
+	columns := make([]string, 0, len(r.Metrics))
+	for colname := range r.Metrics {
 		columns = append(columns, colname)
 	}
 
@@ -86,5 +102,5 @@ func (r Report) Columns() []string {
 }
 
 func (r Report) ColumnMetric(colname string) Metrics {
-	return r.metrics[colname]
+	return r.Metrics[colname]
 }
