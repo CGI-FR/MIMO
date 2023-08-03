@@ -109,7 +109,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 			metrics := report.ColumnMetric(colname)
 			switch {
 			case metrics.MaskingRate() < 1 && metrics.MaskingRate() > 0:
-				log.Error().Str("field", colname).Msg("partially masked")
+				log.Error().Str("field", colname).Float64("rate", metrics.MaskingRate()).Msg("partially masked")
 			case metrics.MaskingRate() == 1:
 				log.Info().Str("field", colname).Msg("totally masked")
 			case metrics.MaskingRate() == 0:
