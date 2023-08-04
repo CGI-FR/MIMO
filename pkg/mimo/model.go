@@ -1,6 +1,8 @@
 package mimo
 
 import (
+	"fmt"
+
 	"github.com/rs/zerolog/log"
 )
 
@@ -21,14 +23,16 @@ func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 }
 
 type Metrics struct {
-	TotalCount  int64 // TotalCount is the number of values analyzed
-	NilCount    int64 // NilCount is the number of null values in real data
-	EmptyCount  int64 // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
-	MaskedCount int64 // MaskedCount is the number of non-blank real values masked
+	TotalCount  int64    // TotalCount is the number of values analyzed
+	NilCount    int64    // NilCount is the number of null values in real data
+	EmptyCount  int64    // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
+	MaskedCount int64    // MaskedCount is the number of non-blank real values masked
+	Coherence   Multimap // Coherence is a multimap used to compute the coherence rate
+	Identifiant Multimap // Identifiant is a multimap used to compute the identifiable rate
 }
 
 func NewMetrics() Metrics {
-	return Metrics{TotalCount: 0, NilCount: 0, EmptyCount: 0, MaskedCount: 0}
+	return Metrics{TotalCount: 0, NilCount: 0, EmptyCount: 0, MaskedCount: 0, Coherence: Multimap{}, Identifiant: Multimap{}}
 }
 
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
@@ -44,6 +48,9 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 	}
 
 	m.TotalCount++
+
+	m.Coherence.Add(fmt.Sprint(realValue), fmt.Sprint(maskedValue))
+	m.Identifiant.Add(fmt.Sprint(maskedValue), fmt.Sprint(realValue))
 }
 
 // BlankCount is the number of blank (null or empty) values in real data.

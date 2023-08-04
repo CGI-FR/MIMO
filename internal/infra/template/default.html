@@ -16,7 +16,8 @@
       <th>Masked</th>
       <th>Missed</th>
       <th>Masking Rate</th>
-      <th>Collision Rate</th>
+      <th>Coherent Rate</th>
+      <th>Identifiable Rate</th>
     </thead>
     <tbody>
       {{ range $key, $value := .Metrics }}
@@ -27,7 +28,8 @@
         <td>{{ $value.MaskedCount }}</td>
         <td>{{ $value.NonMaskedCount }}</td>
         <td style="background-color: {{ if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %</td>
-        <td>TODO</td>
+        <td style="background-color: {{ if $value.Coherence.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Coherence.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
+        <td style="background-color: {{ if $value.Identifiant.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Identifiant.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
       </tr>
       {{ end }}
     </tbody>
