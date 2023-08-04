@@ -1,0 +1,36 @@
+# Venom Test Suite definition
+# Check Venom documentation for more information : https://github.com/ovh/venom
+name: validate metrics
+testcases:
+  - name: test case 1
+    steps:
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+      - script: echo '{}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"V"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6 rate-identifiable=0.8 rate-masking=0.8

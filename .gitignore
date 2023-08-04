@@ -2,3 +2,4 @@
 bin
 .cache
 venom*.log
+test/suites/working/*

@@ -1,9 +1,8 @@
 package mimo
 
 import (
+	"encoding/json"
 	"fmt"
-
-	"github.com/rs/zerolog/log"
 )
 
 type DataRow map[string]any
@@ -43,21 +42,29 @@ func NewMetrics() Metrics {
 }
 
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
-	log.Trace().Interface("real", realValue).Interface("masked", maskedValue).Msg("update metric")
-
-	switch {
-	case realValue == nil:
-		m.NilCount++
-	case realValue != maskedValue:
-		m.MaskedCount++
-	case m.MaskedCount == m.NonBlankCount():
-		subs.PostFirstNonMaskedValue(fieldname, realValue)
-	}
+	nonBlankCount := m.NonBlankCount()
 
 	m.TotalCount++
 
-	m.Coherence.Add(fmt.Sprint(realValue), fmt.Sprint(maskedValue))
-	m.Identifiant.Add(fmt.Sprint(maskedValue), fmt.Sprint(realValue))
+	if realValue == nil {
+		m.NilCount++
+
+		return
+	}
+
+	realValueStr, realValueOk := toString(realValue)
+	maskedValueStr, maskedValueOk := toString(maskedValue)
+
+	if realValueOk && maskedValueOk {
+		if realValueStr != maskedValueStr {
+			m.MaskedCount++
+		} else if m.MaskedCount == nonBlankCount {
+			subs.PostFirstNonMaskedValue(fieldname, realValue)
+		}
+	}
+
+	m.Coherence.Add(realValueStr, maskedValueStr)
+	m.Identifiant.Add(maskedValueStr, realValueStr)
 }
 
 // BlankCount is the number of blank (null or empty) values in real data.
@@ -72,7 +79,7 @@ func (m Metrics) NonBlankCount() int64 {
 
 // NonMaskedCount is the number of non-blank (non-null and non-empty) values in real data that were not masked.
 func (m Metrics) NonMaskedCount() int64 {
-	return m.TotalCount - m.MaskedCount
+	return m.NonBlankCount() - m.MaskedCount
 }
 
 // MaskedRate is equal to
@@ -117,4 +124,20 @@ func (r Report) Columns() []string {
 
 func (r Report) ColumnMetric(colname string) Metrics {
 	return r.Metrics[colname]
+}
+
+func toString(value any) (string, bool) {
+	var str string
+	switch tvalue := value.(type) {
+	case string:
+		str = tvalue
+	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8, float32, float64, bool:
+		str = fmt.Sprint(tvalue)
+	case json.Number:
+		str = string(tvalue)
+	default:
+		return "", false
+	}
+
+	return str, true
 }
