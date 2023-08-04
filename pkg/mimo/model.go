@@ -32,7 +32,14 @@ type Metrics struct {
 }
 
 func NewMetrics() Metrics {
-	return Metrics{TotalCount: 0, NilCount: 0, EmptyCount: 0, MaskedCount: 0, Coherence: Multimap{}, Identifiant: Multimap{}}
+	return Metrics{
+		TotalCount:  0,
+		NilCount:    0,
+		EmptyCount:  0,
+		MaskedCount: 0,
+		Coherence:   Multimap{},
+		Identifiant: Multimap{},
+	}
 }
 
 func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
