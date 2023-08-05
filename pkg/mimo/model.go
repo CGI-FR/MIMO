@@ -89,6 +89,11 @@ func (m Metrics) NonMaskedCount() int64 {
 	return m.NonBlankCount() - m.MaskedCount
 }
 
+// K is the minimum number of value pseudonym was attributed.
+func (m Metrics) K() int {
+	return m.Identifiant.CountMin()
+}
+
 // MaskedRate is equal to
 //
 //	Number of non-blank real values masked

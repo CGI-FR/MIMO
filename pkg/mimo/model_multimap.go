@@ -36,3 +36,16 @@ func (m Multimap) Rate() float64 {
 
 	return float64(cnt) / float64(len(m))
 }
+
+// CountMin returns the minimum count of values associated to a key across the map.
+func (m Multimap) CountMin() int {
+	var cnt int
+
+	for _, set := range m {
+		if cnt == 0 || len(set) < cnt {
+			cnt = len(set)
+		}
+	}
+
+	return cnt
+}

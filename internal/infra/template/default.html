@@ -18,6 +18,7 @@
       <th>Masking Rate</th>
       <th>Coherent Rate</th>
       <th>Identifiable Rate</th>
+      <th>K</th>
     </thead>
     <tbody>
       {{ range $key, $value := .Metrics }}
@@ -30,6 +31,7 @@
         <td style="background-color: {{ if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %</td>
         <td style="background-color: {{ if $value.Coherence.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Coherence.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
         <td style="background-color: {{ if $value.Identifiant.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Identifiant.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
+        <td style="background-color: {{ if gt $value.K 1 }}lightgreen{{else}}orange{{end}}">{{ $value.K }}</td>
       </tr>
       {{ end }}
     </tbody>
