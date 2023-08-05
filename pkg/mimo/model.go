@@ -42,13 +42,17 @@ func NewMetrics() Metrics {
 	}
 }
 
-func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) {
+func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) bool {
 	nonBlankCount := m.NonBlankCount()
-
-	m.TotalCount++
 
 	realValueStr, realValueOk := toString(realValue)
 	maskedValueStr, maskedValueOk := toString(maskedValue)
+
+	if !realValueOk || !maskedValueOk {
+		return false // special case (arrays, objects) are not covered right now
+	}
+
+	m.TotalCount++
 
 	m.Coherence.Add(realValueStr, maskedValueStr)
 	m.Identifiant.Add(maskedValueStr, realValueStr)
@@ -56,7 +60,7 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 	if realValue == nil {
 		m.NilCount++
 
-		return
+		return true
 	}
 
 	if realValueOk && maskedValueOk {
@@ -66,6 +70,8 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 			subs.PostFirstNonMaskedValue(fieldname, realValue)
 		}
 	}
+
+	return true
 }
 
 // BlankCount is the number of blank (null or empty) values in real data.
@@ -109,8 +115,9 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			r.subs.PostNewField(key)
 		}
 
-		metrics.Update(key, realValue, maskedRow[key], r.subs)
-		r.Metrics[key] = metrics
+		if metrics.Update(key, realValue, maskedRow[key], r.subs) {
+			r.Metrics[key] = metrics
+		}
 	}
 }
 

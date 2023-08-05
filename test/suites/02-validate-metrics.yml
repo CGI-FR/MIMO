@@ -16,6 +16,7 @@ testcases:
       - script: echo '{"value":"E"}' >> working/real.jsonl
       - script: echo '{"value":null}' >> working/real.jsonl
       - script: echo '{}' >> working/real.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/real.jsonl
 
       - script: echo '{"value":"X"}' > working/masked.jsonl
       - script: echo '{"value":"Y"}' >> working/masked.jsonl
@@ -29,6 +30,7 @@ testcases:
       - script: echo '{"value":"C"}' >> working/masked.jsonl
       - script: echo '{"value":"W"}' >> working/masked.jsonl
       - script: echo '{}' >> working/masked.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/masked.jsonl
 
       - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
         assertions:
