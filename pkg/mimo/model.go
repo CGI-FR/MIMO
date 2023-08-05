@@ -3,6 +3,7 @@ package mimo
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type DataRow map[string]any
@@ -46,14 +47,17 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 
 	m.TotalCount++
 
+	realValueStr, realValueOk := toString(realValue)
+	maskedValueStr, maskedValueOk := toString(maskedValue)
+
+	m.Coherence.Add(realValueStr, maskedValueStr)
+	m.Identifiant.Add(maskedValueStr, realValueStr)
+
 	if realValue == nil {
 		m.NilCount++
 
 		return
 	}
-
-	realValueStr, realValueOk := toString(realValue)
-	maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if realValueOk && maskedValueOk {
 		if realValueStr != maskedValueStr {
@@ -62,9 +66,6 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 			subs.PostFirstNonMaskedValue(fieldname, realValue)
 		}
 	}
-
-	m.Coherence.Add(realValueStr, maskedValueStr)
-	m.Identifiant.Add(maskedValueStr, realValueStr)
 }
 
 // BlankCount is the number of blank (null or empty) values in real data.
@@ -130,11 +131,13 @@ func toString(value any) (string, bool) {
 	var str string
 	switch tvalue := value.(type) {
 	case string:
-		str = tvalue
+		str = strconv.Quote(tvalue)
 	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8, float32, float64, bool:
 		str = fmt.Sprint(tvalue)
 	case json.Number:
 		str = string(tvalue)
+	case nil:
+		str = "nil"
 	default:
 		return "", false
 	}
