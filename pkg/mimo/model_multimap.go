@@ -45,6 +45,10 @@ func (m Multimap) CountMin() int {
 		if cnt == 0 || len(set) < cnt {
 			cnt = len(set)
 		}
+
+		if cnt == 1 {
+			break
+		}
 	}
 
 	return cnt
