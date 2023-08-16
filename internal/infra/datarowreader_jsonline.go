@@ -25,7 +25,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/adrienaury/mimo/pkg/mimo"
+	"github.com/cgi-fr/mimo/pkg/mimo"
 )
 
 type DataRowReaderJSONLine struct {

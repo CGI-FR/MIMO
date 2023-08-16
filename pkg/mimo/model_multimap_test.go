@@ -20,7 +20,7 @@ package mimo_test
 import (
 	"testing"
 
-	"github.com/adrienaury/mimo/pkg/mimo"
+	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/stretchr/testify/assert"
 )
 

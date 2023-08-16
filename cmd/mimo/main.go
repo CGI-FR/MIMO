@@ -24,8 +24,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/adrienaury/mimo/internal/infra"
-	"github.com/adrienaury/mimo/pkg/mimo"
+	"github.com/cgi-fr/mimo/internal/infra"
+	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/mattn/go-isatty"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"

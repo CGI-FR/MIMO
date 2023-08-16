@@ -1,4 +1,4 @@
-module github.com/adrienaury/mimo
+module github.com/cgi-fr/mimo
 
 go 1.20
 

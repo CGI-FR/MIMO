@@ -24,7 +24,7 @@ import (
 	"os"
 
 	"github.com/Masterminds/sprig/v3"
-	"github.com/adrienaury/mimo/pkg/mimo"
+	"github.com/cgi-fr/mimo/pkg/mimo"
 )
 
 //go:embed template/default.html
