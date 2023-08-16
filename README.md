@@ -1,12 +1,6 @@
 # MIMO
 
-Sensitive and
-Personal
-Information
-Protection
-Evaluator
-
-Secure Pseudo-Anonymization Metrics
+Masked Input Metrics Output
 
 ## Usage
 
