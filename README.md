@@ -1,6 +1,12 @@
-# MIMO
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/CGI-FR/MIMO/ci.yml?branch=main)
+[![Go Report Card](https://goreportcard.com/badge/github.com/cgi-fr/mimo)](https://goreportcard.com/report/github.com/cgi-fr/mimo)
+![GitHub all releases](https://img.shields.io/github/downloads/CGI-FR/MIMO/total)
+![GitHub](https://img.shields.io/github/license/CGI-FR/MIMO)
+![GitHub Repo stars](https://img.shields.io/github/stars/CGI-FR/MIMO)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/CGI-FR/MIMO)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/CGI-FR/MIMO)
 
-Masked Input Metrics Output
+# MIMO : Masked Input Metrics Output
 
 ## Usage
 
