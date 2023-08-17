@@ -102,7 +102,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		log.Fatal().Err(err).Msg("end MIMO")
 	}
 
-	driver := mimo.NewDriver(realReader, maskedReader, infra.SubscriberLogger{})
+	driver := mimo.NewDriver(realReader, maskedReader, func() mimo.Multimap { return infra.InMemoryMultimap{} }, infra.SubscriberLogger{})
 
 	if configfile != "" {
 		if config, err := infra.LoadConfig(configfile); err != nil {

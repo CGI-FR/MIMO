@@ -15,19 +15,19 @@
 // You should have received a copy of the GNU General Public License
 // along with MIMO.  If not, see <http://www.gnu.org/licenses/>.
 
-package mimo_test
+package infra_test
 
 import (
 	"testing"
 
-	"github.com/cgi-fr/mimo/pkg/mimo"
+	"github.com/cgi-fr/mimo/internal/infra"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMultimap(t *testing.T) {
 	t.Parallel()
 
-	multimap := mimo.InMemoryMultimap{}
+	multimap := infra.InMemoryMultimap{}
 
 	multimap.Add("A", "X")
 	multimap.Add("A", "Y")

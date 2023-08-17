@@ -30,12 +30,17 @@ type Driver struct {
 	report         Report
 }
 
-func NewDriver(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) Driver {
+func NewDriver(
+	realReader DataRowReader,
+	maskedReader DataRowReader,
+	multimapFactory MultimapFactory,
+	subs ...EventSubscriber,
+) Driver {
 	return Driver{
 		realDataSource: realReader,
 		maskDataSource: maskedReader,
 		subscribers:    subs,
-		report:         NewReport(subs, NewConfig()),
+		report:         NewReport(subs, NewConfig(), multimapFactory),
 	}
 }
 

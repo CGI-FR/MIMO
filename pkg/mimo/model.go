@@ -51,14 +51,16 @@ type Metrics struct {
 	Constraints []Constraint // Constraints is the set of rules to validate
 }
 
-func NewMetrics(constraints ...Constraint) Metrics {
+type MultimapFactory func() Multimap
+
+func NewMetrics(multimapFactory MultimapFactory, constraints ...Constraint) Metrics {
 	return Metrics{
 		TotalCount:  0,
 		NilCount:    0,
 		EmptyCount:  0,
 		MaskedCount: 0,
-		Coherence:   InMemoryMultimap{},
-		Identifiant: InMemoryMultimap{},
+		Coherence:   multimapFactory(),
+		Identifiant: multimapFactory(),
 		Constraints: constraints,
 	}
 }
@@ -224,20 +226,21 @@ func (m Metrics) Validate() int {
 }
 
 type Report struct {
-	Metrics map[string]Metrics
-	subs    Suscribers
-	config  Config
+	Metrics         map[string]Metrics
+	subs            Suscribers
+	config          Config
+	multiMapFactory MultimapFactory
 }
 
-func NewReport(subs []EventSubscriber, config Config) Report {
-	return Report{make(map[string]Metrics), subs, config}
+func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFactory) Report {
+	return Report{make(map[string]Metrics), subs, config, multiMapFactory}
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
 		metrics, exists := r.Metrics[key]
 		if !exists {
-			metrics = NewMetrics(r.config.ColumnConfigs[key].Constraints...)
+			metrics = NewMetrics(r.multiMapFactory)
 
 			r.subs.PostNewField(key)
 		}
