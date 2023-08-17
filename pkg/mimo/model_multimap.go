@@ -17,10 +17,10 @@
 
 package mimo
 
-type Multimap map[string]map[string]int
+type InMemoryMultimap map[string]map[string]int
 
 // Add a key/value pair to the multimap.
-func (m Multimap) Add(key string, value string) {
+func (m InMemoryMultimap) Add(key string, value string) {
 	set, exists := m[key]
 	if !exists {
 		set = make(map[string]int)
@@ -32,7 +32,7 @@ func (m Multimap) Add(key string, value string) {
 }
 
 // Count the number of values associated to key.
-func (m Multimap) Count(key string) int {
+func (m InMemoryMultimap) Count(key string) int {
 	set, exists := m[key]
 	if !exists {
 		return 0
@@ -42,7 +42,7 @@ func (m Multimap) Count(key string) int {
 }
 
 // Rate return the percentage of keys that have a count of 1.
-func (m Multimap) Rate() float64 {
+func (m InMemoryMultimap) Rate() float64 {
 	cnt := 0
 
 	for _, set := range m {
@@ -55,7 +55,7 @@ func (m Multimap) Rate() float64 {
 }
 
 // CountMin returns the minimum count of values associated to a key across the map.
-func (m Multimap) CountMin() int {
+func (m InMemoryMultimap) CountMin() int {
 	var cnt int
 
 	for _, set := range m {

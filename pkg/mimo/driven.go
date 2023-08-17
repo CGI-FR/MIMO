@@ -25,3 +25,10 @@ type EventSubscriber interface {
 	NewField(fieldname string)
 	FirstNonMaskedValue(fieldname string, value any)
 }
+
+type Multimap interface {
+	Add(key string, value string)
+	Count(key string) int
+	Rate() float64
+	CountMin() int
+}

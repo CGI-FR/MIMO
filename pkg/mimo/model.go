@@ -57,8 +57,8 @@ func NewMetrics(constraints ...Constraint) Metrics {
 		NilCount:    0,
 		EmptyCount:  0,
 		MaskedCount: 0,
-		Coherence:   Multimap{},
-		Identifiant: Multimap{},
+		Coherence:   InMemoryMultimap{},
+		Identifiant: InMemoryMultimap{},
 		Constraints: constraints,
 	}
 }
