@@ -1,7 +1,7 @@
 version: "1"
 metrics:
   - name: "name"
-    exclude: [nil, ""]
+    exclude: ["Ronan", "Candice"]
     coherentWith: ["name", "surname"]
     constraints:
       maskingRate:

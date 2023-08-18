@@ -20,7 +20,9 @@ package mimo
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
+	"strings"
 )
 
 type DataRow map[string]any
@@ -59,7 +61,14 @@ func NewMetrics() Metrics {
 	}
 }
 
-func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers, config ColumnConfig) bool {
+func (m *Metrics) Update(
+	fieldname string,
+	realValue any,
+	maskedValue any,
+	coherenceValue []any,
+	subs Suscribers,
+	config ColumnConfig,
+) bool {
 	nonBlankCount := m.NonBlankCount()
 
 	realValueStr, realValueOk := toString(realValue)
@@ -71,7 +80,7 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 
 	m.TotalCount++
 
-	m.Coherence.Add(realValueStr, maskedValueStr)
+	m.Coherence.Add(toStringSlice(coherenceValue), maskedValueStr)
 	m.Identifiant.Add(maskedValueStr, realValueStr)
 
 	if realValue == nil {
@@ -149,7 +158,12 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			config = cfg
 		}
 
-		if metrics.Update(key, realValue, maskedRow[key], r.subs, config) {
+		coherenceValue := make([]any, len(config.CoherentWith))
+		for i, coherentColumn := range config.CoherentWith {
+			coherenceValue[i] = realRow[coherentColumn]
+		}
+
+		if metrics.Update(key, realValue, maskedRow[key], coherenceValue, r.subs, config) {
 			r.Metrics[key] = metrics
 		}
 	}
@@ -184,4 +198,18 @@ func toString(value any) (string, bool) {
 	}
 
 	return str, true
+}
+
+func toStringSlice(values []any) string {
+	result := strings.Builder{}
+
+	for _, value := range values {
+		if str, ok := toString(value); ok {
+			result.WriteString(str)
+		}
+
+		result.WriteString("_")
+	}
+
+	return result.String()
 }

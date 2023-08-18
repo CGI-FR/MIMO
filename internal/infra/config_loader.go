@@ -38,7 +38,7 @@ type YAMLStructure struct {
 // YAMLColumn defines how to store a column config in YAML format
 type YAMLColumn struct {
 	Name         string                    `yaml:"name"`
-	Exclude      []string                  `yaml:"exclude,omitempty"`
+	Exclude      []any                     `yaml:"exclude,omitempty"`
 	CoherentWith []string                  `yaml:"coherentWith,omitempty"`
 	Constraints  map[string]YAMLConstraint `yaml:"constraints,omitempty"`
 }
