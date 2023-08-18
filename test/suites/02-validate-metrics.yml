@@ -36,3 +36,74 @@ testcases:
         assertions:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
+
+      - script: mv report.html report_1.html
+
+  - name: config exclude values
+    steps:
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"V"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --config config_exclude.yaml -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=2 count-masked=8 count-missed=0 count-nil=0 field=value rate-coherence=0.6 rate-identifiable=0.8 rate-masking=1
+
+      - script: mv report.html report_2.html
+
+  - name: config coherence source
+    steps:
+      - script: echo '{"value":"A", "coherent":"1"}' > working/real.jsonl
+      - script: echo '{"value":"A", "coherent":"2"}' >> working/real.jsonl
+      - script: echo '{"value":"B", "coherent":"1"}' >> working/real.jsonl
+      - script: echo '{"value":"B", "coherent":"2"}' >> working/real.jsonl
+      - script: echo '{"value":"C", "coherent":"1"}' >> working/real.jsonl
+      - script: echo '{"value":"C", "coherent":"2"}' >> working/real.jsonl
+      - script: echo '{"value":"D", "coherent":"1"}' >> working/real.jsonl
+      - script: echo '{"value":"D", "coherent":"2"}' >> working/real.jsonl
+      - script: echo '{"value":"E", "coherent":"1"}' >> working/real.jsonl
+      - script: echo '{"value":"E", "coherent":"2"}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"V"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --config config_coherent.yaml -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=0 field=value rate-coherence=0 rate-identifiable=0.8 rate-masking=0.8
+
+      - script: mv report.html report_3.html
+
+      - script: cat working/masked.jsonl | mimo --config config_coherent2.yaml -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=0 field=value rate-coherence=1 rate-identifiable=0.8 rate-masking=0.8
+
+      - script: mv report.html report_4.html
