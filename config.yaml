@@ -1,0 +1,10 @@
+version: "1"
+metrics:
+  - name: "name"
+    exclude: [nil, ""]
+    coherentWith: ["name", "surname"]
+    constraints:
+      maskingRate:
+        shouldEqual: 1
+      coherentRate:
+        shouldBeGreaterThan: 0.95
