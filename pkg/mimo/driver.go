@@ -28,7 +28,6 @@ type Driver struct {
 	maskDataSource DataRowReader
 	subscribers    Suscribers
 	report         Report
-	config         Config
 }
 
 func NewDriver(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) Driver {
@@ -36,13 +35,12 @@ func NewDriver(realReader DataRowReader, maskedReader DataRowReader, subs ...Eve
 		realDataSource: realReader,
 		maskDataSource: maskedReader,
 		subscribers:    subs,
-		report:         NewReport(subs),
-		config:         NewConfig(),
+		report:         NewReport(subs, NewConfig()),
 	}
 }
 
 func (d *Driver) Configure(c Config) {
-	d.config = c
+	d.report.config = c
 }
 
 func (d *Driver) Analyze() (Report, error) {

@@ -59,7 +59,7 @@ func NewMetrics() Metrics {
 	}
 }
 
-func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers) bool {
+func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs Suscribers, config ColumnConfig) bool {
 	nonBlankCount := m.NonBlankCount()
 
 	realValueStr, realValueOk := toString(realValue)
@@ -76,6 +76,12 @@ func (m *Metrics) Update(fieldname string, realValue any, maskedValue any, subs 
 
 	if realValue == nil {
 		m.NilCount++
+
+		return true
+	}
+
+	if slices.Contains(config.Exclude, realValue) {
+		m.EmptyCount++
 
 		return true
 	}
@@ -122,10 +128,11 @@ func (m Metrics) MaskedRate() float64 {
 type Report struct {
 	Metrics map[string]Metrics
 	subs    Suscribers
+	config  Config
 }
 
-func NewReport(subs []EventSubscriber) Report {
-	return Report{make(map[string]Metrics), subs}
+func NewReport(subs []EventSubscriber, config Config) Report {
+	return Report{make(map[string]Metrics), subs, config}
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
@@ -137,7 +144,12 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			r.subs.PostNewField(key)
 		}
 
-		if metrics.Update(key, realValue, maskedRow[key], r.subs) {
+		config := NewDefaultColumnConfig(key)
+		if cfg, ok := r.config.ColumnConfigs[key]; ok {
+			config = cfg
+		}
+
+		if metrics.Update(key, realValue, maskedRow[key], r.subs, config) {
 			r.Metrics[key] = metrics
 		}
 	}

@@ -58,3 +58,11 @@ func NewConfig() Config {
 		ColumnConfigs: map[string]ColumnConfig{},
 	}
 }
+
+func NewDefaultColumnConfig(columnname string) ColumnConfig {
+	return ColumnConfig{
+		Exclude:      []string{},
+		CoherentWith: []string{columnname},
+		Constraints:  []Constraint{},
+	}
+}
