@@ -37,7 +37,7 @@ testcases:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
 
-      - script: mv report.html report_1.html
+      - script: mv report.html ../reports/report_1.html
 
   - name: config exclude values
     steps:
@@ -63,12 +63,12 @@ testcases:
       - script: echo '{"value":"V"}' >> working/masked.jsonl
       - script: echo '{"value":"C"}' >> working/masked.jsonl
 
-      - script: cat working/masked.jsonl | mimo --config config_exclude.yaml -v3 working/real.jsonl
+      - script: cat working/masked.jsonl | mimo --config ../configs/config_exclude.yaml -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=2 count-masked=8 count-missed=0 count-nil=0 field=value rate-coherence=0.6 rate-identifiable=0.8 rate-masking=1
 
-      - script: mv report.html report_2.html
+      - script: mv report.html ../reports/report_2.html
 
   - name: config coherence source
     steps:
@@ -94,16 +94,16 @@ testcases:
       - script: echo '{"value":"V"}' >> working/masked.jsonl
       - script: echo '{"value":"C"}' >> working/masked.jsonl
 
-      - script: cat working/masked.jsonl | mimo --config config_coherent.yaml -v3 working/real.jsonl
+      - script: cat working/masked.jsonl | mimo --config ../configs/config_coherent.yaml -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=0 field=value rate-coherence=0 rate-identifiable=0.8 rate-masking=0.8
 
-      - script: mv report.html report_3.html
+      - script: mv report.html ../reports/report_3.html
 
-      - script: cat working/masked.jsonl | mimo --config config_coherent2.yaml -v3 working/real.jsonl
+      - script: cat working/masked.jsonl | mimo --config ../configs/config_coherent2.yaml -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=0 field=value rate-coherence=1 rate-identifiable=0.8 rate-masking=0.8
 
-      - script: mv report.html report_4.html
+      - script: mv report.html ../reports/report_4.html
