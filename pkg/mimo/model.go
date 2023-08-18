@@ -158,12 +158,16 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			config = cfg
 		}
 
-		coherenceValue := make([]any, len(config.CoherentWith))
+		coherenceValues := make([]any, len(config.CoherentWith))
 		for i, coherentColumn := range config.CoherentWith {
-			coherenceValue[i] = realRow[coherentColumn]
+			coherenceValues[i] = realRow[coherentColumn]
 		}
 
-		if metrics.Update(key, realValue, maskedRow[key], coherenceValue, r.subs, config) {
+		if len(coherenceValues) == 0 {
+			coherenceValues = []any{realValue}
+		}
+
+		if metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config) {
 			r.Metrics[key] = metrics
 		}
 	}
@@ -201,7 +205,7 @@ func toString(value any) (string, bool) {
 }
 
 func toStringSlice(values []any) string {
-	result := strings.Builder{}
+	result := &strings.Builder{}
 
 	for _, value := range values {
 		if str, ok := toString(value); ok {

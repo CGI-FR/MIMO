@@ -1,8 +1,8 @@
 version: "1"
 metrics:
   - name: "name"
-    exclude: ["Ronan", "Candice"]
-    coherentWith: ["name", "surname"]
+    exclude: [""]
+    coherentWith: ["name"]
     constraints:
       maskingRate:
         shouldEqual: 1
