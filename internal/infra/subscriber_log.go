@@ -25,6 +25,6 @@ func (sl SubscriberLogger) NewField(fieldname string) {
 	log.Info().Str("name", fieldname).Msg("new field")
 }
 
-func (sl SubscriberLogger) FirstNonMaskedValue(fieldname string, value any) {
+func (sl SubscriberLogger) FirstNonMaskedValue(fieldname string, _ any) {
 	log.Info().Str("name", fieldname).Msg("unmasked value detected")
 }

@@ -35,7 +35,7 @@ type YAMLStructure struct {
 	Columns []YAMLColumn `yaml:"metrics,omitempty"`
 }
 
-// YAMLColumn defines how to store a column config in YAML format
+// YAMLColumn defines how to store a column config in YAML format.
 type YAMLColumn struct {
 	Name         string                    `yaml:"name"`
 	Exclude      []any                     `yaml:"exclude,omitempty"`
