@@ -196,6 +196,33 @@ func (m Metrics) IdentifiantRateValidate() int {
 	return result
 }
 
+// Validate returns :
+//   - -1 if at least one constraint fail,
+//   - 0 if no constraint exist,
+//   - 1 if all constraints succeed ,
+func (m Metrics) Validate() int {
+	resultMaskedRate := m.MaskedRateValidate()
+	if resultMaskedRate < 0 {
+		return -1
+	}
+
+	resultCoherentRate := m.CoherenceRateValidate()
+	if resultCoherentRate < 0 {
+		return -1
+	}
+
+	resultIdentifiantRate := m.IdentifiantRateValidate()
+	if resultIdentifiantRate < 0 {
+		return -1
+	}
+
+	if resultMaskedRate > 0 || resultCoherentRate > 0 || resultIdentifiantRate > 0 {
+		return 1
+	}
+
+	return 0
+}
+
 type Report struct {
 	Metrics map[string]Metrics
 	subs    Suscribers

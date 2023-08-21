@@ -141,7 +141,7 @@ testcases:
 
       - script: cat working/masked.jsonl | mimo --config ../configs/config_constraints_2.yaml -v3 working/real.jsonl
         assertions:
-          - result.code ShouldEqual 0
+          - result.code ShouldEqual 1
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=0 field=value rate-coherence=0.6 rate-identifiable=0.8 rate-masking=0.8
 
       - script: mv report.html ../reports/report_6.html
