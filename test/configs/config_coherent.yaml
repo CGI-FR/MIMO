@@ -1,0 +1,4 @@
+version: "1"
+metrics:
+  - name: "value"
+    coherentWith: ["coherent"]

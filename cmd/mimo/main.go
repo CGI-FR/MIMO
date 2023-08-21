@@ -44,6 +44,8 @@ var (
 	jsonlog   bool
 	debug     bool
 	colormode string
+
+	configfile string
 )
 
 func main() {
@@ -84,6 +86,7 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "add debug information to logs (very slow)")
 	rootCmd.PersistentFlags().BoolVar(&jsonlog, "log-json", false, "output logs in JSON format")
 	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "use colors in log outputs : yes, no or auto")
+	rootCmd.PersistentFlags().StringVar(&configfile, "config", "", "name of the YAML configuration file to use")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Err(err).Msg("error when executing command")
@@ -100,6 +103,17 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 	}
 
 	driver := mimo.NewDriver(realReader, maskedReader, infra.SubscriberLogger{})
+
+	if configfile != "" {
+		if config, err := infra.LoadConfig(configfile); err != nil {
+			log.Fatal().Err(err).Msg("end MIMO")
+		} else {
+			driver.Configure(config)
+		}
+	}
+
+	haserror := false
+
 	if report, err := driver.Analyze(); err != nil {
 		log.Error().Err(err).Msg("end of program")
 	} else {
@@ -107,18 +121,36 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		sort.Strings(columns)
 		for _, colname := range columns {
 			metrics := report.ColumnMetric(colname)
-			log.Info().
-				Str("field", colname).
-				Int64("count-nil", metrics.NilCount).
-				Int64("count-empty", metrics.EmptyCount).
-				Int64("count-masked", metrics.MaskedCount).
-				Int64("count-missed", metrics.NonMaskedCount()).
-				Float64("rate-masking", metrics.MaskedRate()).
-				Float64("rate-coherence", metrics.Coherence.Rate()).
-				Float64("rate-identifiable", metrics.Identifiant.Rate()).
-				Msg("summmary for column " + colname)
+			if metrics.Validate() >= 0 {
+				log.Info().
+					Str("field", colname).
+					Int64("count-nil", metrics.NilCount).
+					Int64("count-empty", metrics.EmptyCount).
+					Int64("count-masked", metrics.MaskedCount).
+					Int64("count-missed", metrics.NonMaskedCount()).
+					Float64("rate-masking", metrics.MaskedRate()).
+					Float64("rate-coherence", metrics.Coherence.Rate()).
+					Float64("rate-identifiable", metrics.Identifiant.Rate()).
+					Msg("summmary for column " + colname)
+			} else {
+				log.Error().
+					Str("field", colname).
+					Int64("count-nil", metrics.NilCount).
+					Int64("count-empty", metrics.EmptyCount).
+					Int64("count-masked", metrics.MaskedCount).
+					Int64("count-missed", metrics.NonMaskedCount()).
+					Float64("rate-masking", metrics.MaskedRate()).
+					Float64("rate-coherence", metrics.Coherence.Rate()).
+					Float64("rate-identifiable", metrics.Identifiant.Rate()).
+					Msg("summmary for column " + colname)
+				haserror = true
+			}
 		}
 		_ = infra.NewReportExporter().Export(report, "report.html")
+	}
+
+	if haserror {
+		os.Exit(1)
 	}
 }
 

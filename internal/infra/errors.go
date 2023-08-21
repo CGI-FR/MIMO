@@ -17,14 +17,18 @@
 
 package infra
 
-import "github.com/rs/zerolog/log"
+import "errors"
 
-type SubscriberLogger struct{}
+var (
+	// ErrConfigFileNotExists is returned when a config file doesn't exist.
+	ErrConfigFileNotExists = errors.New("error config file does not exist")
 
-func (sl SubscriberLogger) NewField(fieldname string) {
-	log.Info().Str("name", fieldname).Msg("new field")
-}
+	// ErrConfigInvalidVersion is returned when a config file has an invalid version.
+	ErrConfigInvalidVersion = errors.New("invalid version in config file")
 
-func (sl SubscriberLogger) FirstNonMaskedValue(fieldname string, _ any) {
-	log.Info().Str("name", fieldname).Msg("unmasked value detected")
-}
+	// ErrConfigInvalidConstraintType is returned when a config file has an invalid constraint type.
+	ErrConfigInvalidConstraintType = errors.New("invalid constraint type in config file")
+
+	// ErrConfigInvalidConstraintTarget is returned when a config file has an invalid constraint target.
+	ErrConfigInvalidConstraintTarget = errors.New("invalid constraint target in config file")
+)

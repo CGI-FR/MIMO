@@ -1,6 +1,6 @@
 module github.com/cgi-fr/mimo
 
-go 1.20
+go 1.21
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
@@ -8,6 +8,7 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.5.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

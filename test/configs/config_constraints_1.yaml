@@ -1,0 +1,10 @@
+version: "1"
+metrics:
+  - name: "value"
+    constraints:
+      maskingRate:
+        shouldEqual: 0.8
+      coherentRate:
+        shouldBeGreaterThan: 0.5 #0.6
+      identifiantRate:
+        shouldBeGreaterThan: 0.5 #0.8

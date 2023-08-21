@@ -1,0 +1,10 @@
+version: "1"
+metrics:
+  - name: "name"
+    exclude: [""]
+    coherentWith: ["name"]
+    constraints:
+      maskingRate:
+        shouldEqual: 1
+      coherentRate:
+        shouldBeGreaterThan: 0.5
