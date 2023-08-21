@@ -42,15 +42,16 @@ func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 }
 
 type Metrics struct {
-	TotalCount  int64    // TotalCount is the number of values analyzed
-	NilCount    int64    // NilCount is the number of null values in real data
-	EmptyCount  int64    // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
-	MaskedCount int64    // MaskedCount is the number of non-blank real values masked
-	Coherence   Multimap // Coherence is a multimap used to compute the coherence rate
-	Identifiant Multimap // Identifiant is a multimap used to compute the identifiable rate
+	TotalCount  int64        // TotalCount is the number of values analyzed
+	NilCount    int64        // NilCount is the number of null values in real data
+	EmptyCount  int64        // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
+	MaskedCount int64        // MaskedCount is the number of non-blank real values masked
+	Coherence   Multimap     // Coherence is a multimap used to compute the coherence rate
+	Identifiant Multimap     // Identifiant is a multimap used to compute the identifiable rate
+	Constraints []Constraint // Constraints is the set of rules to validate
 }
 
-func NewMetrics() Metrics {
+func NewMetrics(constraints ...Constraint) Metrics {
 	return Metrics{
 		TotalCount:  0,
 		NilCount:    0,
@@ -58,6 +59,7 @@ func NewMetrics() Metrics {
 		MaskedCount: 0,
 		Coherence:   Multimap{},
 		Identifiant: Multimap{},
+		Constraints: constraints,
 	}
 }
 
@@ -134,6 +136,66 @@ func (m Metrics) MaskedRate() float64 {
 	return float64(m.MaskedCount) / float64(m.NonBlankCount())
 }
 
+// MaskedRateValidate returns :
+//   - -1 if at least one constraint fail on the MaskedRate,
+//   - 0 if no constraint exist on the MaskedRate,
+//   - 1 if all constraints succeed on the MaskedRate,
+func (m Metrics) MaskedRateValidate() int {
+	result := 0
+
+	for _, constraint := range m.Constraints {
+		if constraint.Target == MaskingRate {
+			if !validate(constraint.Type, constraint.Value, m.MaskedRate()) {
+				return -1
+			} else {
+				result = 1
+			}
+		}
+	}
+
+	return result
+}
+
+// CoherenceRateValidate returns :
+//   - -1 if at least one constraint fail on the CoherenceRate,
+//   - 0 if no constraint exist on the CoherenceRate,
+//   - 1 if all constraints succeed on the CoherenceRate,
+func (m Metrics) CoherenceRateValidate() int {
+	result := 0
+
+	for _, constraint := range m.Constraints {
+		if constraint.Target == CohenrentRate {
+			if !validate(constraint.Type, constraint.Value, m.Coherence.Rate()) {
+				return -1
+			} else {
+				result = 1
+			}
+		}
+	}
+
+	return result
+}
+
+// IdentifiantRateValidate returns :
+//   - -1 if at least one constraint fail on the IdentifiantRate,
+//   - 0 if no constraint exist on the IdentifiantRate,
+//   - 1 if all constraints succeed on the IdentifiantRate,
+func (m Metrics) IdentifiantRateValidate() int {
+	result := 0
+
+	for _, constraint := range m.Constraints {
+		if constraint.Target == IdentifiantRate {
+			if !validate(constraint.Type, constraint.Value, m.Identifiant.Rate()) {
+				return -1
+			} else {
+				result = 1
+			}
+		}
+	}
+
+	return result
+}
+
 type Report struct {
 	Metrics map[string]Metrics
 	subs    Suscribers
@@ -148,7 +210,7 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
 		metrics, exists := r.Metrics[key]
 		if !exists {
-			metrics = NewMetrics()
+			metrics = NewMetrics(r.config.ColumnConfigs[key].Constraints...)
 
 			r.subs.PostNewField(key)
 		}
@@ -216,4 +278,21 @@ func toStringSlice(values []any) string {
 	}
 
 	return result.String()
+}
+
+func validate(constraint ConstraintType, reference float64, value float64) bool {
+	switch constraint {
+	case ShouldEqual:
+		return value == reference
+	case ShouldBeGreaterThan:
+		return value > reference
+	case ShouldBeGreaterThanOrEqualTo:
+		return value >= reference
+	case ShouldBeLowerThan:
+		return value < reference
+	case ShouldBeLessThanOrEqualTo:
+		return value <= reference
+	default:
+		return false
+	}
 }
