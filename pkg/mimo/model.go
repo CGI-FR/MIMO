@@ -147,9 +147,9 @@ func (m Metrics) MaskedRateValidate() int {
 		if constraint.Target == MaskingRate {
 			if !validate(constraint.Type, constraint.Value, m.MaskedRate()) {
 				return -1
-			} else {
-				result = 1
 			}
+
+			result = 1
 		}
 	}
 
@@ -167,9 +167,9 @@ func (m Metrics) CoherenceRateValidate() int {
 		if constraint.Target == CohenrentRate {
 			if !validate(constraint.Type, constraint.Value, m.Coherence.Rate()) {
 				return -1
-			} else {
-				result = 1
 			}
+
+			result = 1
 		}
 	}
 
@@ -187,9 +187,9 @@ func (m Metrics) IdentifiantRateValidate() int {
 		if constraint.Target == IdentifiantRate {
 			if !validate(constraint.Type, constraint.Value, m.Identifiant.Rate()) {
 				return -1
-			} else {
-				result = 1
 			}
+
+			result = 1
 		}
 	}
 
