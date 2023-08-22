@@ -18,25 +18,32 @@
 package infra_test
 
 import (
-	"log"
+	"os"
 	"testing"
 
 	"github.com/cgi-fr/mimo/internal/infra"
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/cockroachdb/pebble"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBadgerMultimap(t *testing.T) {
+func TestPebbleMultimap(t *testing.T) {
 	t.Parallel()
 
-	opt := badger.DefaultOptions("").WithInMemory(true)
-	db, err := badger.Open(opt)
+	dir, err := os.MkdirTemp("", "prefix")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
-	defer db.Close()
 
-	multimap := infra.BadgerMultimap{DB: db}
+	defer os.RemoveAll(dir)
+
+	//nolint:exhaustruct
+	dbTest, err := pebble.Open(dir, &pebble.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer dbTest.Close()
+
+	multimap := infra.PebbleMultimap{DB: dbTest}
 
 	multimap.Add("A", "X")
 	multimap.Add("A", "Y")
