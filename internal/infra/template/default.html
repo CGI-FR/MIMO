@@ -28,9 +28,9 @@
         <td>{{ $value.EmptyCount }}</td>
         <td>{{ $value.MaskedCount }}</td>
         <td>{{ $value.NonMaskedCount }}</td>
-        <td style="background-color: {{ if $value.MaskedRateValidate | eq 1 }}lightgreen{{else if $value.MaskedRateValidate | eq -1}}red{{else if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %</td>
-        <td style="background-color: {{ if $value.CoherenceRateValidate | eq 1 }}lightgreen{{else if $value.CoherenceRateValidate | eq -1}}red{{else if $value.Coherence.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Coherence.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
-        <td style="background-color: {{ if $value.IdentifiantRateValidate | eq 1 }}lightgreen{{else if $value.IdentifiantRateValidate | eq -1}}red{{else if $value.Identifiant.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ $value.Identifiant.Rate | mulf 100.00 | printf "%0.02f" }} %</td>
+        <td style="background-color: {{ if $value.MaskedRateValidate | eq 1 }}lightgreen{{else if $value.MaskedRateValidate | eq -1}}red{{else if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ if ne (toString $value.MaskedRate) "NaN" }}{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %{{ else }}NaN{{ end }}</td>
+        <td style="background-color: {{ if $value.CoherenceRateValidate | eq 1 }}lightgreen{{else if $value.CoherenceRateValidate | eq -1}}red{{else if $value.Coherence.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ if ne (toString $value.Coherence.Rate) "NaN" }}{{ $value.Coherence.Rate | mulf 100.00 | printf "%0.02f" }} %{{ else }}NaN{{ end }}</td>
+        <td style="background-color: {{ if $value.IdentifiantRateValidate | eq 1 }}lightgreen{{else if $value.IdentifiantRateValidate | eq -1}}red{{else if $value.Identifiant.Rate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ if ne (toString $value.Identifiant.Rate) "NaN" }}{{ $value.Identifiant.Rate | mulf 100.00 | printf "%0.02f" }} %{{ else }}NaN{{ end }}</td>
         <td style="background-color: {{ if gt $value.K 1 }}lightgreen{{else}}orange{{end}}">{{ $value.K }}</td>
       </tr>
       {{ end }}
