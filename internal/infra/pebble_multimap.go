@@ -20,7 +20,9 @@ package infra
 import (
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/cockroachdb/pebble"
 )
@@ -32,14 +34,62 @@ const (
 )
 
 type PebbleMultimap struct {
-	DB *pebble.DB
+	db      *pebble.DB
+	path    string
+	tempory bool
+}
+
+func PebbleMultimapFactory(path string) (PebbleMultimap, error) {
+	var (
+		err     error
+		tempory bool
+	)
+
+	originalPath := path
+
+	if path == "" {
+		path, err = os.MkdirTemp("", "mimo-pebble")
+		if err != nil {
+			return PebbleMultimap{}, fmt.Errorf("%w", err)
+		}
+	}
+
+	//nolint:exhaustruct
+	database, err := pebble.Open(path, &pebble.Options{})
+	if err != nil {
+		return PebbleMultimap{}, fmt.Errorf("%w", err)
+	}
+
+	if originalPath == "" {
+		tempory = true
+	}
+
+	return PebbleMultimap{db: database, path: path, tempory: tempory}, nil
+}
+
+// Close the database.
+func (m PebbleMultimap) Close() error {
+	err := m.db.Close()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	// remove database if temporary
+	if m.tempory {
+		err = os.RemoveAll(m.path)
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+	}
+
+	return nil
 }
 
 // Add a key/value pair to the multimap.
 func (m PebbleMultimap) Add(key string, value string) {
 	var set map[string]int
 
-	item, closer, err := m.DB.Get([]byte(KeyPrefix + key))
+	item, closer, err := m.db.Get([]byte(KeyPrefix + key))
 
 	if err != nil {
 		set = make(map[string]int)
@@ -58,14 +108,14 @@ func (m PebbleMultimap) Add(key string, value string) {
 		return
 	}
 
-	err = m.DB.Set([]byte(KeyPrefix+key), rawValue, pebble.NoSync)
+	err = m.db.Set([]byte(KeyPrefix+key), rawValue, pebble.NoSync)
 	if err != nil {
 		return
 	}
 
 	buf := make([]byte, binary.MaxVarintLen64)
 	n := binary.PutVarint(buf, int64(len(set)))
-	err = m.DB.Set([]byte(CountPrefix+key), buf[:n], pebble.NoSync)
+	err = m.db.Set([]byte(CountPrefix+key), buf[:n], pebble.NoSync)
 
 	if err != nil {
 		return
@@ -76,7 +126,7 @@ func (m PebbleMultimap) Add(key string, value string) {
 func (m PebbleMultimap) Count(key string) int {
 	var count int64
 
-	item, closer, err := m.DB.Get([]byte(CountPrefix + key))
+	item, closer, err := m.db.Get([]byte(CountPrefix + key))
 	if err != nil {
 		count = 0
 	} else {
@@ -92,7 +142,7 @@ func (m PebbleMultimap) Rate() float64 {
 	entries := 0
 	entriesWithOneValue := 0
 
-	iter, _ := m.DB.NewIter(prefixIterOptions([]byte(CountPrefix)))
+	iter, _ := m.db.NewIter(m.prefixIterOptions([]byte(CountPrefix)))
 	for iter.First(); iter.Valid(); iter.Next() {
 		localCount, _ := binary.Varint(iter.Value())
 
@@ -111,10 +161,29 @@ func (m PebbleMultimap) Rate() float64 {
 
 // CountMin returns the minimum count of values associated to a key across the map.
 func (m PebbleMultimap) CountMin() int {
-	return 1
+	minimum := 0
+
+	iter, _ := m.db.NewIter(m.prefixIterOptions([]byte(CountPrefix)))
+	for iter.First(); iter.Valid(); iter.Next() {
+		localCount, _ := binary.Varint(iter.Value())
+
+		if minimum == 0 || localCount < int64(minimum) {
+			minimum = int(localCount)
+		}
+
+		if minimum == 1 {
+			break
+		}
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	return minimum
 }
 
-func keyUpperBound(b []byte) []byte {
+func (m PebbleMultimap) keyUpperBound(b []byte) []byte {
 	end := make([]byte, len(b))
 	copy(end, b)
 
@@ -128,10 +197,10 @@ func keyUpperBound(b []byte) []byte {
 	return nil // no upper-bound
 }
 
-func prefixIterOptions(prefix []byte) *pebble.IterOptions {
+func (m PebbleMultimap) prefixIterOptions(prefix []byte) *pebble.IterOptions {
 	//nolint:exhaustruct
 	return &pebble.IterOptions{
 		LowerBound: prefix,
-		UpperBound: keyUpperBound(prefix),
+		UpperBound: m.keyUpperBound(prefix),
 	}
 }

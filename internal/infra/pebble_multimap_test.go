@@ -18,32 +18,21 @@
 package infra_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/cgi-fr/mimo/internal/infra"
-	"github.com/cockroachdb/pebble"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPebbleMultimap(t *testing.T) {
 	t.Parallel()
 
-	dir, err := os.MkdirTemp("", "prefix")
+	multimap, err := infra.PebbleMultimapFactory("")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	defer os.RemoveAll(dir)
-
-	//nolint:exhaustruct
-	dbTest, err := pebble.Open(dir, &pebble.Options{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer dbTest.Close()
-
-	multimap := infra.PebbleMultimap{DB: dbTest}
+	defer multimap.Close()
 
 	multimap.Add("A", "X")
 	multimap.Add("A", "Y")
