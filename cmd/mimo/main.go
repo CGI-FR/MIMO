@@ -130,14 +130,17 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	haserror := false
 
 	if report, err := driver.Analyze(); err != nil {
-		log.Error().Err(err).Msg("end of program")
+		log.Fatal().Err(err).Msg("end of program")
 	} else {
 		columns := report.Columns()
 		sort.Strings(columns)
 		for _, colname := range columns {
 			haserror = appendColumnMetric(report, colname, haserror)
 		}
-		_ = infra.NewReportExporter().Export(report, "report.html")
+
+		if err = infra.NewReportExporter().Export(report, "report.html"); err != nil {
+			log.Fatal().Err(err).Msg("end of program")
+		}
 	}
 
 	if haserror {

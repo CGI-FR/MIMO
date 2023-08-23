@@ -14,6 +14,10 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.2.1]
+
+- `Fixed` HTML report fail when rating result is NaN.
+
 ## [0.2.0]
 
 - `Added` configuration file with `metrics[].exclude`, `metrics[]coherentWith` and `metrics[]constraints` parameters.
