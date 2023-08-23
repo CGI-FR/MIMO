@@ -102,7 +102,12 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		log.Fatal().Err(err).Msg("end MIMO")
 	}
 
-	driver := mimo.NewDriver(realReader, maskedReader, func() mimo.Multimap { return infra.InMemoryMultimap{} }, infra.SubscriberLogger{})
+	driver := mimo.NewDriver(
+		realReader,
+		maskedReader,
+		func() mimo.Multimap { return infra.InMemoryMultimap{} },
+		infra.SubscriberLogger{},
+	)
 
 	if configfile != "" {
 		if config, err := infra.LoadConfig(configfile); err != nil {
@@ -120,31 +125,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		columns := report.Columns()
 		sort.Strings(columns)
 		for _, colname := range columns {
-			metrics := report.ColumnMetric(colname)
-			if metrics.Validate() >= 0 {
-				log.Info().
-					Str("field", colname).
-					Int64("count-nil", metrics.NilCount).
-					Int64("count-empty", metrics.EmptyCount).
-					Int64("count-masked", metrics.MaskedCount).
-					Int64("count-missed", metrics.NonMaskedCount()).
-					Float64("rate-masking", metrics.MaskedRate()).
-					Float64("rate-coherence", metrics.Coherence.Rate()).
-					Float64("rate-identifiable", metrics.Identifiant.Rate()).
-					Msg("summmary for column " + colname)
-			} else {
-				log.Error().
-					Str("field", colname).
-					Int64("count-nil", metrics.NilCount).
-					Int64("count-empty", metrics.EmptyCount).
-					Int64("count-masked", metrics.MaskedCount).
-					Int64("count-missed", metrics.NonMaskedCount()).
-					Float64("rate-masking", metrics.MaskedRate()).
-					Float64("rate-coherence", metrics.Coherence.Rate()).
-					Float64("rate-identifiable", metrics.Identifiant.Rate()).
-					Msg("summmary for column " + colname)
-				haserror = true
-			}
+			haserror = appendColumnMetric(report, colname, haserror)
 		}
 		_ = infra.NewReportExporter().Export(report, "report.html")
 	}
@@ -152,6 +133,36 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 	if haserror {
 		os.Exit(1)
 	}
+}
+
+func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool {
+	metrics := report.ColumnMetric(colname)
+	if metrics.Validate() >= 0 {
+		log.Info().
+			Str("field", colname).
+			Int64("count-nil", metrics.NilCount).
+			Int64("count-empty", metrics.EmptyCount).
+			Int64("count-masked", metrics.MaskedCount).
+			Int64("count-missed", metrics.NonMaskedCount()).
+			Float64("rate-masking", metrics.MaskedRate()).
+			Float64("rate-coherence", metrics.Coherence.Rate()).
+			Float64("rate-identifiable", metrics.Identifiant.Rate()).
+			Msg("summmary for column " + colname)
+	} else {
+		log.Error().
+			Str("field", colname).
+			Int64("count-nil", metrics.NilCount).
+			Int64("count-empty", metrics.EmptyCount).
+			Int64("count-masked", metrics.MaskedCount).
+			Int64("count-missed", metrics.NonMaskedCount()).
+			Float64("rate-masking", metrics.MaskedRate()).
+			Float64("rate-coherence", metrics.Coherence.Rate()).
+			Float64("rate-identifiable", metrics.Identifiant.Rate()).
+			Msg("summmary for column " + colname)
+		haserror = true
+	}
+
+	return haserror
 }
 
 func initLog() {

@@ -240,7 +240,7 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
 		metrics, exists := r.Metrics[key]
 		if !exists {
-			metrics = NewMetrics(r.multiMapFactory)
+			metrics = NewMetrics(r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
 
 			r.subs.PostNewField(key)
 		}

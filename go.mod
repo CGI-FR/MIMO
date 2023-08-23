@@ -8,8 +8,8 @@ require (
 	github.com/mattn/go-isatty v0.0.14
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.7.0
-	gopkg.in/yaml.v3 v3.0.1
 	github.com/stretchr/testify v1.7.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -51,5 +51,4 @@ require (
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e // indirect
 	golang.org/x/sys v0.3.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
