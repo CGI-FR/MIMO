@@ -1,0 +1,21 @@
+# Test suite for bugfix non-regression
+name: check bugfixes
+testcases:
+  - name: HTML report fail when rating result is NaN
+    steps:
+      - script: echo '{"value":null}' > working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+
+      - script: echo '{"value":"A"}' > working/masked.jsonl
+      - script: echo '{"value":"B"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"D"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=0 count-missed=0 count-nil=4 field=value rate-coherence=0 rate-identifiable=1 rate-masking=NaN
+
+      - script: mv report.html ../reports/report_6.html
