@@ -31,4 +31,5 @@ type Multimap interface {
 	Count(key string) int
 	Rate() float64
 	CountMin() int
+	Close() error
 }

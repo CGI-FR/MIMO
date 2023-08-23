@@ -45,7 +45,9 @@ var (
 	debug     bool
 	colormode string
 
-	configfile string
+	configfile  string
+	diskStorage bool
+	persist     string
 )
 
 func main() {
@@ -73,8 +75,8 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 				Msg("start MIMO")
 		},
 		Args: cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
-			run(cmd, args[0])
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd, args[0])
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			log.Info().Int("return", 0).Msg("end MIMO")
@@ -88,13 +90,17 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "use colors in log outputs : yes, no or auto")
 	rootCmd.PersistentFlags().StringVar(&configfile, "config", "", "name of the YAML configuration file to use")
 
+	rootCmd.PersistentFlags().BoolVar(&diskStorage, "disk-storage", false, "enable data storage on disk")
+	rootCmd.PersistentFlags().StringVar(&persist, "persist", "",
+		"persist data in the specified directory (implies --disk-storage)")
+
 	if err := rootCmd.Execute(); err != nil {
 		log.Err(err).Msg("error when executing command")
 		os.Exit(1)
 	}
 }
 
-func run(_ *cobra.Command, realJSONLineFileName string) {
+func run(_ *cobra.Command, realJSONLineFileName string) error {
 	realReader, err := infra.NewDataRowReaderJSONLineFromFile(realJSONLineFileName)
 	maskedReader := infra.NewDataRowReaderJSONLine(os.Stdin, os.Stdout)
 
@@ -102,20 +108,24 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 		log.Fatal().Err(err).Msg("end MIMO")
 	}
 
+	var config mimo.Config
+
+	if configfile != "" {
+		if config, err = infra.LoadConfig(configfile); err != nil {
+			log.Fatal().Err(err).Msg("end MIMO")
+		}
+	}
+
 	driver := mimo.NewDriver(
 		realReader,
 		maskedReader,
-		func() mimo.Multimap { return infra.InMemoryMultimap{} },
+		selectMultimapFactory(),
 		infra.SubscriberLogger{},
 	)
 
-	if configfile != "" {
-		if config, err := infra.LoadConfig(configfile); err != nil {
-			log.Fatal().Err(err).Msg("end MIMO")
-		} else {
-			driver.Configure(config)
-		}
-	}
+	defer driver.Close()
+
+	driver.Configure(config)
 
 	haserror := false
 
@@ -131,8 +141,33 @@ func run(_ *cobra.Command, realJSONLineFileName string) {
 	}
 
 	if haserror {
-		os.Exit(1)
+		return mimo.ErrCoherence
 	}
+
+	return nil
+}
+
+func selectMultimapFactory() mimo.MultimapFactory {
+	var multimapFactory mimo.MultimapFactory
+
+	if !diskStorage && persist == "" {
+		multimapFactory = func(fieldname string) mimo.Multimap { return infra.InMemoryMultimap{} }
+	} else {
+		multimapFactory = func(fieldname string) mimo.Multimap {
+			path := ""
+			if persist != "" {
+				path = persist + "/" + fieldname
+			}
+			factory, err := infra.PebbleMultimapFactory(path)
+			if err != nil {
+				log.Fatal().Err(err).Msg("End MIMO")
+			}
+
+			return factory
+		}
+	}
+
+	return multimapFactory
 }
 
 func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool {

@@ -70,3 +70,7 @@ func (m InMemoryMultimap) CountMin() int {
 
 	return cnt
 }
+
+func (m InMemoryMultimap) Close() error {
+	return nil
+}

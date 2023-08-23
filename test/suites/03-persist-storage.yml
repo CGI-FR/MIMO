@@ -1,0 +1,85 @@
+# Venom Test Suite definition
+# Check Venom documentation for more information : https://github.com/ovh/venom
+name: persistance storage
+testcases:
+  - name: temp directory
+    steps:
+      - script: rm -rf /tmp/mimo-pebble*
+
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"B", "value2":"X"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"D", "value3":"Y"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+      - script: echo '{}' >> working/real.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C", "value2":"X"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"W", "value3":"Z"}' >> working/masked.jsonl
+      - script: echo '{"value":"V"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{}' >> working/masked.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo -v3 --disk-storage working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
+
+      - script: ls -l /tmp/ | grep mimo-pebble |wc -l
+        assertions:
+          - result.systemout ShouldEqual 0
+
+      - script: mv report.html ../reports/report_7.html
+
+  - name: user directory
+    steps:
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"B"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"C"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"D"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":"E"}' >> working/real.jsonl
+      - script: echo '{"value":null}' >> working/real.jsonl
+      - script: echo '{}' >> working/real.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{"value":"V"}' >> working/masked.jsonl
+      - script: echo '{"value":"C"}' >> working/masked.jsonl
+      - script: echo '{"value":"W"}' >> working/masked.jsonl
+      - script: echo '{}' >> working/masked.jsonl
+      - script: echo '{"object":{"hello":"world"}}' >> working/masked.jsonl
+
+      - script: rm -rf working/data
+
+      - script: cat working/masked.jsonl | mimo -v3 --disk-storage --persist working/data/ working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
+
+      - script: mv report.html ../reports/report_8.html

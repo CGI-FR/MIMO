@@ -42,6 +42,7 @@ func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 }
 
 type Metrics struct {
+	Fieldname   string       // Fieldname is name of column analyzed
 	TotalCount  int64        // TotalCount is the number of values analyzed
 	NilCount    int64        // NilCount is the number of null values in real data
 	EmptyCount  int64        // EmptyCount is the number of empty values in real data (empty string or numbers at 0 value)
@@ -51,16 +52,17 @@ type Metrics struct {
 	Constraints []Constraint // Constraints is the set of rules to validate
 }
 
-type MultimapFactory func() Multimap
+type MultimapFactory func(fieldname string) Multimap
 
-func NewMetrics(multimapFactory MultimapFactory, constraints ...Constraint) Metrics {
+func NewMetrics(fieldname string, multimapFactory MultimapFactory, constraints ...Constraint) Metrics {
 	return Metrics{
+		Fieldname:   fieldname,
 		TotalCount:  0,
 		NilCount:    0,
 		EmptyCount:  0,
 		MaskedCount: 0,
-		Coherence:   multimapFactory(),
-		Identifiant: multimapFactory(),
+		Coherence:   multimapFactory(fieldname + "-coherence"),
+		Identifiant: multimapFactory(fieldname + "-identifiant"),
 		Constraints: constraints,
 	}
 }
@@ -240,7 +242,7 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 	for key, realValue := range realRow {
 		metrics, exists := r.Metrics[key]
 		if !exists {
-			metrics = NewMetrics(r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
+			metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
 
 			r.subs.PostNewField(key)
 		}
@@ -259,9 +261,9 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			coherenceValues = []any{realValue}
 		}
 
-		if metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config) {
-			r.Metrics[key] = metrics
-		}
+		metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config)
+
+		r.Metrics[key] = metrics
 	}
 }
 

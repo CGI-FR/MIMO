@@ -25,4 +25,7 @@ var (
 
 	// ErrOrphanRow is returned when a original row does not have a masked version, or the other way around.
 	ErrOrphanRow = errors.New("error datarow is orphan")
+
+	// ErrCoherence is retruned when coherence is not repected.
+	ErrCoherence = errors.New("coherence is not repected")
 )

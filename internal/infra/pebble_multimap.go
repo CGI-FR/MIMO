@@ -21,8 +21,9 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
+
+	"github.com/rs/zerolog/log"
 
 	"github.com/cockroachdb/pebble"
 )
@@ -54,10 +55,11 @@ func PebbleMultimapFactory(path string) (PebbleMultimap, error) {
 		}
 	}
 
+	log.Trace().Str("path", path).Msg("open pebble data base")
 	//nolint:exhaustruct
 	database, err := pebble.Open(path, &pebble.Options{})
 	if err != nil {
-		return PebbleMultimap{}, fmt.Errorf("%w", err)
+		return PebbleMultimap{}, fmt.Errorf("unable to open database %v : %w", path, err)
 	}
 
 	if originalPath == "" {
@@ -76,7 +78,9 @@ func (m PebbleMultimap) Close() error {
 
 	// remove database if temporary
 	if m.tempory {
+		log.Info().Str("path", m.path).Msg("Remove database")
 		err = os.RemoveAll(m.path)
+
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}
@@ -153,7 +157,7 @@ func (m PebbleMultimap) Rate() float64 {
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("cant't close database iterator")
 	}
 
 	return float64(entriesWithOneValue) / float64(entries)
@@ -177,7 +181,7 @@ func (m PebbleMultimap) CountMin() int {
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Msg("cant't close database iterator")
 	}
 
 	return minimum
