@@ -26,10 +26,18 @@ type EventSubscriber interface {
 	FirstNonMaskedValue(fieldname string, value any)
 }
 
-type Multimap interface {
-	Add(key string, value string)
-	Count(key string) int
-	Rate() float64
-	CountMin() int
+type MultimapBackend interface {
+	Close() error
+	GetKey(key string) (map[string]int, error)
+	SetKey(key string, value map[string]int) error
+	GetSize(key string) int
+	NewSizeIterator() SizeIterator
+}
+
+type SizeIterator interface {
+	First() bool
+	Next() bool
+	Valid() bool
+	Value() int
 	Close() error
 }

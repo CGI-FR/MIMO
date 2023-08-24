@@ -28,4 +28,7 @@ var (
 
 	// ErrCoherence is retruned when coherence is not repected.
 	ErrCoherence = errors.New("coherence is not repected")
+
+	// ErrKeyNotFound is returned when key is not in multimap.
+	ErrKeyNotFound = errors.New("key not found in multimap")
 )

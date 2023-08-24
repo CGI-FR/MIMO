@@ -157,7 +157,9 @@ func selectMultimapFactory() mimo.MultimapFactory {
 	var multimapFactory mimo.MultimapFactory
 
 	if !diskStorage && persist == "" {
-		multimapFactory = func(fieldname string) mimo.Multimap { return infra.InMemoryMultimap{} }
+		multimapFactory = func(fieldname string) mimo.Multimap {
+			return mimo.Multimap{Backend: mimo.InMemoryMultimapBackend{}}
+		}
 	} else {
 		multimapFactory = func(fieldname string) mimo.Multimap {
 			path := ""

@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/rs/zerolog/log"
 
 	"github.com/cockroachdb/pebble"
@@ -35,13 +36,34 @@ const (
 	MinPrefix   = "M_"
 )
 
-type PebbleMultimap struct {
+type PebbleMultimapBackend struct {
 	db      *pebble.DB
 	path    string
 	tempory bool
 }
 
-func PebbleMultimapFactory(path string) (PebbleMultimap, error) {
+func (b PebbleMultimapBackend) Close() error {
+	err := b.db.Close()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	log.Info().Str("path", b.path).Msg("database closed")
+
+	// remove database if temporary
+	if b.tempory {
+		log.Info().Str("path", b.path).Msg("Remove database")
+		err = os.RemoveAll(b.path)
+
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+	}
+
+	return nil
+}
+
+func PebbleMultimapFactory(path string) (mimo.Multimap, error) {
 	var (
 		err     error
 		tempory bool
@@ -52,7 +74,7 @@ func PebbleMultimapFactory(path string) (PebbleMultimap, error) {
 	if path == "" {
 		path, err = os.MkdirTemp("", "mimo-pebble")
 		if err != nil {
-			return PebbleMultimap{}, fmt.Errorf("%w", err)
+			return mimo.Multimap{}, fmt.Errorf("%w", err)
 		}
 	}
 
@@ -60,83 +82,67 @@ func PebbleMultimapFactory(path string) (PebbleMultimap, error) {
 	//nolint:exhaustruct
 	database, err := pebble.Open(path, &pebble.Options{})
 	if err != nil {
-		return PebbleMultimap{}, fmt.Errorf("unable to open database %v : %w", path, err)
+		return mimo.Multimap{}, fmt.Errorf("unable to open database %v : %w", path, err)
 	}
 
 	if originalPath == "" {
 		tempory = true
 	}
 
-	return PebbleMultimap{db: database, path: path, tempory: tempory}, nil
+	return mimo.Multimap{Backend: PebbleMultimapBackend{db: database, path: path, tempory: tempory}}, nil
 }
 
-// Close the database.
-func (m PebbleMultimap) Close() error {
-	err := m.db.Close()
+func (b PebbleMultimapBackend) GetKey(key string) (map[string]int, error) {
+	var (
+		set map[string]int
+		err error
+	)
+
+	item, closer, err := b.db.Get([]byte(KeyPrefix + key))
+	if errors.Is(err, pebble.ErrNotFound) {
+		return nil, mimo.ErrKeyNotFound
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+	defer closer.Close()
+
+	err = json.Unmarshal(item, &set)
+	if err != nil {
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	return set, nil
+}
+
+func (b PebbleMultimapBackend) SetKey(key string, value map[string]int) error {
+	rawValue, err := json.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
-	log.Info().Str("path", m.path).Msg("database closed")
+	err = b.db.Set([]byte(KeyPrefix+key), rawValue, pebble.NoSync)
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
 
-	// remove database if temporary
-	if m.tempory {
-		log.Info().Str("path", m.path).Msg("Remove database")
-		err = os.RemoveAll(m.path)
+	// save size in a different namespace
+	buf := make([]byte, binary.MaxVarintLen64)
+	n := binary.PutVarint(buf, int64(len(value)))
 
-		if err != nil {
-			return fmt.Errorf("%w", err)
-		}
+	err = b.db.Set([]byte(CountPrefix+key), buf[:n], pebble.NoSync)
+	if err != nil {
+		return fmt.Errorf("%w", err)
 	}
 
 	return nil
 }
 
-// Add a key/value pair to the multimap.
-func (m PebbleMultimap) Add(key string, value string) {
-	var set map[string]int
-
-	item, closer, err := m.db.Get([]byte(KeyPrefix + key))
-
-	if errors.Is(err, pebble.ErrNotFound) {
-		set = make(map[string]int)
-	} else {
-		if err != nil {
-			return
-		}
-		defer closer.Close()
-		err = json.Unmarshal(item, &set)
-		if err != nil {
-			return
-		}
-	}
-
-	set[value]++
-
-	rawValue, err := json.Marshal(set)
-	if err != nil {
-		return
-	}
-
-	err = m.db.Set([]byte(KeyPrefix+key), rawValue, pebble.NoSync)
-	if err != nil {
-		return
-	}
-
-	buf := make([]byte, binary.MaxVarintLen64)
-	n := binary.PutVarint(buf, int64(len(set)))
-	err = m.db.Set([]byte(CountPrefix+key), buf[:n], pebble.NoSync)
-
-	if err != nil {
-		return
-	}
-}
-
-// Count the number of values associated to key.
-func (m PebbleMultimap) Count(key string) int {
+func (b PebbleMultimapBackend) GetSize(key string) int {
 	var count int64
 
-	item, closer, err := m.db.Get([]byte(CountPrefix + key))
+	item, closer, err := b.db.Get([]byte(CountPrefix + key))
 	if err != nil {
 		count = 0
 	} else {
@@ -147,55 +153,46 @@ func (m PebbleMultimap) Count(key string) int {
 	return int(count)
 }
 
-// Rate return the percentage of keys that have a count of 1.
-func (m PebbleMultimap) Rate() float64 {
-	entries := 0
-	entriesWithOneValue := 0
+func (b PebbleMultimapBackend) NewSizeIterator() mimo.SizeIterator { //nolint: ireturn
+	iter, _ := b.db.NewIter(b.prefixIterOptions([]byte(CountPrefix)))
 
-	iter, _ := m.db.NewIter(m.prefixIterOptions([]byte(CountPrefix)))
-	for iter.First(); iter.Valid(); iter.Next() {
-		localCount, _ := binary.Varint(iter.Value())
-
-		if localCount == 1 {
-			entriesWithOneValue++
-		}
-		entries++
-	}
-
-	if err := iter.Close(); err != nil {
-		log.Fatal().Err(err).Msg("cant't close database iterator")
-	}
-
-	return float64(entriesWithOneValue) / float64(entries)
+	return PebbleSizeIterator{iter}
 }
 
-// CountMin returns the minimum count of values associated to a key across the map.
-func (m PebbleMultimap) CountMin() int {
-	minimum := 0
-
-	iter, _ := m.db.NewIter(m.prefixIterOptions([]byte(CountPrefix)))
-	for iter.First(); iter.Valid(); iter.Next() {
-		localCount, _ := binary.Varint(iter.Value())
-
-		if minimum == 0 || localCount < int64(minimum) {
-			minimum = int(localCount)
-		}
-
-		if minimum == 1 {
-			break
-		}
-	}
-
-	if err := iter.Close(); err != nil {
-		log.Fatal().Err(err).Msg("cant't close database iterator")
-	}
-
-	return minimum
+type PebbleSizeIterator struct {
+	iterator *pebble.Iterator
 }
 
-func (m PebbleMultimap) keyUpperBound(b []byte) []byte {
-	end := make([]byte, len(b))
-	copy(end, b)
+func (i PebbleSizeIterator) First() bool {
+	return i.iterator.First()
+}
+
+func (i PebbleSizeIterator) Next() bool {
+	return i.iterator.Next()
+}
+
+func (i PebbleSizeIterator) Valid() bool {
+	return i.iterator.Valid()
+}
+
+func (i PebbleSizeIterator) Value() int {
+	localCount, _ := binary.Varint(i.iterator.Value())
+
+	return int(localCount)
+}
+
+func (i PebbleSizeIterator) Close() error {
+	err := i.iterator.Close()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
+
+func (b PebbleMultimapBackend) keyUpperBound(upper []byte) []byte {
+	end := make([]byte, len(upper))
+	copy(end, upper)
 
 	for i := len(end) - 1; i >= 0; i-- {
 		end[i]++
@@ -207,10 +204,10 @@ func (m PebbleMultimap) keyUpperBound(b []byte) []byte {
 	return nil // no upper-bound
 }
 
-func (m PebbleMultimap) prefixIterOptions(prefix []byte) *pebble.IterOptions {
+func (b PebbleMultimapBackend) prefixIterOptions(prefix []byte) *pebble.IterOptions {
 	//nolint:exhaustruct
 	return &pebble.IterOptions{
 		LowerBound: prefix,
-		UpperBound: m.keyUpperBound(prefix),
+		UpperBound: b.keyUpperBound(prefix),
 	}
 }
