@@ -243,7 +243,6 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 		metrics, exists := r.Metrics[key]
 		if !exists {
 			metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
-
 			r.subs.PostNewField(key)
 		}
 
@@ -261,9 +260,12 @@ func (r Report) Update(realRow DataRow, maskedRow DataRow) {
 			coherenceValues = []any{realValue}
 		}
 
-		metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config)
-
-		r.Metrics[key] = metrics
+		if !metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config) && !exists {
+			metrics.Coherence.Close()
+			metrics.Identifiant.Close()
+		} else {
+			r.Metrics[key] = metrics
+		}
 	}
 }
 

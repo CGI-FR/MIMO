@@ -18,6 +18,7 @@
 package infra_test
 
 import (
+	"os"
 	"testing"
 
 	"github.com/cgi-fr/mimo/internal/infra"
@@ -53,4 +54,52 @@ func TestPebbleMultimap(t *testing.T) {
 	assert.Equal(t, 0, multimap.Count("F"))
 
 	assert.Equal(t, 0.8, multimap.Rate())
+
+	assert.Equal(t, 1, multimap.CountMin())
+}
+
+func TestExistingPebbleMultimap(t *testing.T) {
+	t.Parallel()
+
+	path, err := os.MkdirTemp("", "mimo-pebble")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer func() {
+		os.RemoveAll(path)
+	}()
+
+	multimap, err := infra.PebbleMultimapFactory(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	multimap.Add("A", "X")
+	multimap.Add("B", "Z")
+	multimap.Add("B", "Z")
+	multimap.Add("C", "Z")
+	multimap.Add("D", "W")
+	multimap.Close()
+
+	multimap, err = infra.PebbleMultimapFactory(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	multimap.Add("A", "Y")
+	multimap.Add("C", "Z")
+	multimap.Add("D", "W")
+	multimap.Add("E", "V")
+	multimap.Add("E", "V")
+
+	assert.Equal(t, 2, multimap.Count("A"))
+	assert.Equal(t, 1, multimap.Count("B"))
+	assert.Equal(t, 1, multimap.Count("C"))
+	assert.Equal(t, 1, multimap.Count("D"))
+	assert.Equal(t, 1, multimap.Count("E"))
+	assert.Equal(t, 0, multimap.Count("F"))
+
+	assert.Equal(t, 0.8, multimap.Rate())
+	multimap.Close()
 }

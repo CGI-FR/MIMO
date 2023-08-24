@@ -20,6 +20,7 @@ package infra
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 
@@ -76,6 +77,8 @@ func (m PebbleMultimap) Close() error {
 		return fmt.Errorf("%w", err)
 	}
 
+	log.Info().Str("path", m.path).Msg("database closed")
+
 	// remove database if temporary
 	if m.tempory {
 		log.Info().Str("path", m.path).Msg("Remove database")
@@ -95,9 +98,12 @@ func (m PebbleMultimap) Add(key string, value string) {
 
 	item, closer, err := m.db.Get([]byte(KeyPrefix + key))
 
-	if err != nil {
+	if errors.Is(err, pebble.ErrNotFound) {
 		set = make(map[string]int)
 	} else {
+		if err != nil {
+			return
+		}
 		defer closer.Close()
 		err = json.Unmarshal(item, &set)
 		if err != nil {
