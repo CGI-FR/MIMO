@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/ohler55/ojg/jp"
 	"github.com/rs/zerolog/log"
 )
 
@@ -240,12 +241,12 @@ func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFa
 	return Report{make(map[string]Metrics), subs, config, multiMapFactory}
 }
 
-func (r Report) UpdateDeep(realRow DataRow, maskedRow DataRow, path ...string) {
+func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, path ...string) {
 	for key, realValue := range realRow {
 		switch typedRealValue := realValue.(type) {
 		case map[string]any:
 			if typeMaskedValue, ok := maskedRow[key].(map[string]any); ok {
-				r.UpdateDeep(typedRealValue, typeMaskedValue, append(path, key)...)
+				r.UpdateDeep(root, typedRealValue, typeMaskedValue, append(path, key)...)
 			} else {
 				log.Warn().
 					Strs("path", append(path, key)).
@@ -255,9 +256,9 @@ func (r Report) UpdateDeep(realRow DataRow, maskedRow DataRow, path ...string) {
 			log.Warn().
 				Strs("path", append(path, key)).
 				Msg("ignored path because array structure is not supported")
-		case any:
+		case nil, any:
 			if typeMaskedValue, ok := maskedRow[key]; ok {
-				r.UpdateValue(typedRealValue, typeMaskedValue, append(path, key)...)
+				r.UpdateValue(root, typedRealValue, typeMaskedValue, append(path, key)...)
 			} else {
 				log.Warn().
 					Strs("path", append(path, key)).
@@ -271,7 +272,7 @@ func (r Report) UpdateDeep(realRow DataRow, maskedRow DataRow, path ...string) {
 	}
 }
 
-func (r Report) UpdateValue(realValue any, maskedValue any, path ...string) {
+func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, path ...string) {
 	key := strings.Join(path, ".")
 
 	metrics, exists := r.Metrics[key]
@@ -286,9 +287,14 @@ func (r Report) UpdateValue(realValue any, maskedValue any, path ...string) {
 	}
 
 	coherenceValues := make([]any, len(config.CoherentWith))
-	// for i, coherentColumn := range config.CoherentWith {
-	// 	coherenceValues[i] = realRow[coherentColumn]
-	// }
+
+	for i, coherentColumn := range config.CoherentWith {
+		if jpexp, err := jp.ParseString(coherentColumn); err != nil {
+			coherenceValues[i] = root[coherentColumn]
+		} else {
+			coherenceValues[i] = jpexp.Get(root)[0]
+		}
+	}
 
 	if len(coherenceValues) == 0 {
 		coherenceValues = []any{realValue}
@@ -303,34 +309,7 @@ func (r Report) UpdateValue(realValue any, maskedValue any, path ...string) {
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
-	for key, realValue := range realRow {
-		metrics, exists := r.Metrics[key]
-		if !exists {
-			metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
-			r.subs.PostNewField(key)
-		}
-
-		config := NewDefaultColumnConfig(key)
-		if cfg, ok := r.config.ColumnConfigs[key]; ok {
-			config = cfg
-		}
-
-		coherenceValues := make([]any, len(config.CoherentWith))
-		for i, coherentColumn := range config.CoherentWith {
-			coherenceValues[i] = realRow[coherentColumn]
-		}
-
-		if len(coherenceValues) == 0 {
-			coherenceValues = []any{realValue}
-		}
-
-		if !metrics.Update(key, realValue, maskedRow[key], coherenceValues, r.subs, config) && !exists {
-			metrics.Coherence.Close()
-			metrics.Identifiant.Close()
-		} else {
-			r.Metrics[key] = metrics
-		}
-	}
+	r.UpdateDeep(realRow, realRow, maskedRow)
 }
 
 func (r Report) Columns() []string {
