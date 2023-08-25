@@ -27,7 +27,7 @@ import (
 func TestMultimap(t *testing.T) {
 	t.Parallel()
 
-	multimap := mimo.Multimap{}
+	multimap := mimo.Multimap{Backend: mimo.InMemoryMultimapBackend{}}
 
 	multimap.Add("A", "X")
 	multimap.Add("A", "Y")

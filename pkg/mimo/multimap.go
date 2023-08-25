@@ -17,56 +17,88 @@
 
 package mimo
 
-type Multimap map[string]map[string]int
+import (
+	"errors"
+	"fmt"
+
+	"github.com/rs/zerolog/log"
+)
+
+type Multimap struct {
+	Backend MultimapBackend
+}
+
+// Close the database.
+func (m Multimap) Close() error {
+	err := m.Backend.Close()
+	if err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
 
 // Add a key/value pair to the multimap.
 func (m Multimap) Add(key string, value string) {
-	set, exists := m[key]
-	if !exists {
+	set, err := m.Backend.GetKey(key)
+	if errors.Is(ErrKeyNotFound, err) {
 		set = make(map[string]int)
 	}
 
 	set[value]++
 
-	m[key] = set
+	err = m.Backend.SetKey(key, set)
+	if err != nil {
+		return
+	}
 }
 
 // Count the number of values associated to key.
 func (m Multimap) Count(key string) int {
-	set, exists := m[key]
-	if !exists {
-		return 0
-	}
-
-	return len(set)
+	return m.Backend.GetSize(key)
 }
 
 // Rate return the percentage of keys that have a count of 1.
 func (m Multimap) Rate() float64 {
-	cnt := 0
+	entries := 0
+	entriesWithOneValue := 0
 
-	for _, set := range m {
-		if len(set) == 1 {
-			cnt++
+	iter := m.Backend.NewSizeIterator()
+
+	for iter.First(); iter.Valid(); iter.Next() {
+		if iter.Value() == 1 {
+			entriesWithOneValue++
 		}
+		entries++
 	}
 
-	return float64(cnt) / float64(len(m))
+	if err := iter.Close(); err != nil {
+		log.Warn().Err(err).Msg("cant't close database iterator")
+	}
+
+	return float64(entriesWithOneValue) / float64(entries)
 }
 
 // CountMin returns the minimum count of values associated to a key across the map.
 func (m Multimap) CountMin() int {
-	var cnt int
+	minimum := 0
 
-	for _, set := range m {
-		if cnt == 0 || len(set) < cnt {
-			cnt = len(set)
+	iter := m.Backend.NewSizeIterator()
+	for iter.First(); iter.Valid(); iter.Next() {
+		localCount := iter.Value()
+
+		if minimum == 0 || localCount < minimum {
+			minimum = localCount
 		}
 
-		if cnt == 1 {
+		if minimum == 1 {
 			break
 		}
 	}
 
-	return cnt
+	if err := iter.Close(); err != nil {
+		log.Warn().Err(err).Msg("cant't close database iterator")
+	}
+
+	return minimum
 }

@@ -30,12 +30,17 @@ type Driver struct {
 	report         Report
 }
 
-func NewDriver(realReader DataRowReader, maskedReader DataRowReader, subs ...EventSubscriber) Driver {
+func NewDriver(
+	realReader DataRowReader,
+	maskedReader DataRowReader,
+	multimapFactory MultimapFactory,
+	subs ...EventSubscriber,
+) Driver {
 	return Driver{
 		realDataSource: realReader,
 		maskDataSource: maskedReader,
 		subscribers:    subs,
-		report:         NewReport(subs, NewConfig()),
+		report:         NewReport(subs, NewConfig(), multimapFactory),
 	}
 }
 
@@ -69,4 +74,28 @@ func (d *Driver) Analyze() (Report, error) {
 	}
 
 	return d.report, nil
+}
+
+func (d Driver) Close() error {
+	errors := []error{}
+
+	for key, metric := range d.report.Metrics {
+		log.Info().Str("key", key).Msg("Close metrics")
+
+		err := metric.Coherence.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
+
+		err = metric.Identifiant.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("multiple errors %w (%v)", errors[0], errors[1:])
+	}
+
+	return nil
 }
