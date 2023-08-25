@@ -23,6 +23,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type DataRow map[string]any
@@ -236,6 +238,68 @@ type Report struct {
 
 func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFactory) Report {
 	return Report{make(map[string]Metrics), subs, config, multiMapFactory}
+}
+
+func (r Report) UpdateDeep(realRow DataRow, maskedRow DataRow, path ...string) {
+	for key, realValue := range realRow {
+		switch typedRealValue := realValue.(type) {
+		case map[string]any:
+			if typeMaskedValue, ok := maskedRow[key].(map[string]any); ok {
+				r.UpdateDeep(typedRealValue, typeMaskedValue, append(path, key)...)
+			} else {
+				log.Warn().
+					Strs("path", append(path, key)).
+					Msg("ignored path because structure is different between real and masked data")
+			}
+		case []any:
+			log.Warn().
+				Strs("path", append(path, key)).
+				Msg("ignored path because array structure is not supported")
+		case any:
+			if typeMaskedValue, ok := maskedRow[key]; ok {
+				r.UpdateValue(typedRealValue, typeMaskedValue, append(path, key)...)
+			} else {
+				log.Warn().
+					Strs("path", append(path, key)).
+					Msg("ignored path because structure is different between real and masked data")
+			}
+		default:
+			log.Warn().
+				Strs("path", append(path, key)).
+				Msg("ignored path because structure is not supported")
+		}
+	}
+}
+
+func (r Report) UpdateValue(realValue any, maskedValue any, path ...string) {
+	key := strings.Join(path, ".")
+
+	metrics, exists := r.Metrics[key]
+	if !exists {
+		metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
+		r.subs.PostNewField(key)
+	}
+
+	config := NewDefaultColumnConfig(key)
+	if cfg, ok := r.config.ColumnConfigs[key]; ok {
+		config = cfg
+	}
+
+	coherenceValues := make([]any, len(config.CoherentWith))
+	// for i, coherentColumn := range config.CoherentWith {
+	// 	coherenceValues[i] = realRow[coherentColumn]
+	// }
+
+	if len(coherenceValues) == 0 {
+		coherenceValues = []any{realValue}
+	}
+
+	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
+		metrics.Coherence.Close()
+		metrics.Identifiant.Close()
+	} else {
+		r.Metrics[key] = metrics
+	}
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
