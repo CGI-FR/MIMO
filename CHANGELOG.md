@@ -18,6 +18,7 @@ Types of changes
 
 - `Added` persistance feature with `--persist` flag.
 - `Added` computation on disk instead of memory with `--diskstorage` flag.
+- `Added` analysis of deep nested structures (arrays and objects).
 
 ## [0.2.1]
 

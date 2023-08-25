@@ -92,6 +92,12 @@ func (m *Metrics) Update(
 	m.Coherence.Add(toStringSlice(coherenceValue), maskedValueStr)
 	m.Identifiant.Add(maskedValueStr, realValueStr)
 
+	log.Trace().
+		Str("masked", maskedValueStr).
+		Str("real", realValueStr).
+		Str("coherence", toStringSlice(coherenceValue)).
+		Msg("stored")
+
 	if realValue == nil {
 		m.NilCount++
 
@@ -243,25 +249,56 @@ func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFa
 
 func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, path ...string) {
 	for key, realValue := range realRow {
+		newpath := append(path, key) //nolint:gocritic
+
 		switch typedRealValue := realValue.(type) {
 		case map[string]any:
-			if typeMaskedValue, ok := maskedRow[key].(map[string]any); ok {
-				r.UpdateDeep(root, typedRealValue, typeMaskedValue, append(path, key)...)
+			if typedMaskedValue, ok := maskedRow[key].(map[string]any); ok {
+				r.UpdateDeep(root, typedRealValue, typedMaskedValue, newpath...)
 			} else {
 				log.Warn().
-					Strs("path", append(path, key)).
+					Strs("path", newpath).
 					Msg("ignored path because structure is different between real and masked data")
 			}
 		case []any:
-			log.Warn().
-				Strs("path", append(path, key)).
-				Msg("ignored path because array structure is not supported")
+			if typedMaskedValue, ok := maskedRow[key].([]any); ok {
+				r.UpdateArray(root, typedRealValue, typedMaskedValue, newpath...)
+			}
 		case nil, any:
-			r.UpdateValue(root, typedRealValue, maskedRow[key], append(path, key)...)
+			r.UpdateValue(root, typedRealValue, maskedRow[key], newpath...)
 		default:
 			log.Warn().
-				Strs("path", append(path, key)).
+				Strs("path", newpath).
 				Msg("ignored path because structure is not supported")
+		}
+	}
+}
+
+func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, path ...string) {
+	for index := 0; index < len(realArray) && index < len(maskedArray); index++ {
+		newpath := append(path, "[]") //nolint:gocritic
+
+		switch typedRealItem := realArray[index].(type) {
+		case map[string]any:
+			if typedMaskedItem, ok := maskedArray[index].(map[string]any); ok {
+				r.UpdateDeep(root, typedRealItem, typedMaskedItem, newpath...)
+			} else {
+				log.Warn().
+					Strs("path", newpath).
+					Int("index", index).
+					Msg("ignored item in array at path because structure is different between real and masked data")
+			}
+		case []any:
+			if typedMaskedItem, ok := maskedArray[index].([]any); ok {
+				r.UpdateArray(root, typedRealItem, typedMaskedItem, newpath...)
+			}
+		case nil, any:
+			r.UpdateValue(root, typedRealItem, maskedArray[index], newpath...)
+		default:
+			log.Warn().
+				Strs("path", newpath).
+				Int("index", index).
+				Msg("ignored item in array at path because structure is not supported")
 		}
 	}
 }
@@ -275,7 +312,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, path .
 		r.subs.PostNewField(key)
 	}
 
-	config := NewDefaultColumnConfig(key)
+	config := NewDefaultColumnConfig()
 	if cfg, ok := r.config.ColumnConfigs[key]; ok {
 		config = cfg
 	}
