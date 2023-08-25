@@ -18,4 +18,4 @@ testcases:
           - result.code ShouldEqual 0
           - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=0 count-missed=0 count-nil=4 field=value rate-coherence=0 rate-identifiable=1 rate-masking=NaN
 
-      - script: mv report.html ../reports/report_6.html
+      - script: mv report.html ../reports/report_bugfix_1.html
