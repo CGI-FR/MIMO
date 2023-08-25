@@ -14,6 +14,11 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.3.0]
+
+- `Added` persistance feature with `--persist` flag.
+- `Added` computation on disk instead of memory with `--diskstorage` flag.
+
 ## [0.2.1]
 
 - `Fixed` HTML report fail when rating result is NaN.

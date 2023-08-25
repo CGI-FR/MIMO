@@ -147,7 +147,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	}
 
 	if haserror {
-		return mimo.ErrCoherence
+		return errUnsatisfiedConstraint
 	}
 
 	return nil
