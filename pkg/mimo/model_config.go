@@ -59,10 +59,10 @@ func NewConfig() Config {
 	}
 }
 
-func NewDefaultColumnConfig(columnname string) ColumnConfig {
+func NewDefaultColumnConfig() ColumnConfig {
 	return ColumnConfig{
 		Exclude:      []any{},
-		CoherentWith: []string{columnname},
+		CoherentWith: []string{},
 		Constraints:  []Constraint{},
 	}
 }
