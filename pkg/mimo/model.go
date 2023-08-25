@@ -257,13 +257,7 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, pat
 				Strs("path", append(path, key)).
 				Msg("ignored path because array structure is not supported")
 		case nil, any:
-			if typeMaskedValue, ok := maskedRow[key]; ok {
-				r.UpdateValue(root, typedRealValue, typeMaskedValue, append(path, key)...)
-			} else {
-				log.Warn().
-					Strs("path", append(path, key)).
-					Msg("ignored path because structure is different between real and masked data")
-			}
+			r.UpdateValue(root, typedRealValue, maskedRow[key], append(path, key)...)
 		default:
 			log.Warn().
 				Strs("path", append(path, key)).
