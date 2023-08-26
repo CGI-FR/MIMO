@@ -37,10 +37,11 @@ type YAMLStructure struct {
 
 // YAMLColumn defines how to store a column config in YAML format.
 type YAMLColumn struct {
-	Name         string                    `yaml:"name"`
-	Exclude      []any                     `yaml:"exclude,omitempty"`
-	CoherentWith []string                  `yaml:"coherentWith,omitempty"`
-	Constraints  map[string]YAMLConstraint `yaml:"constraints,omitempty"`
+	Name           string                    `yaml:"name"`
+	Exclude        []any                     `yaml:"exclude,omitempty"`
+	CoherentWith   []string                  `yaml:"coherentWith,omitempty"`
+	CoherentSource string                    `yaml:"coherentSource,omitempty"`
+	Constraints    map[string]YAMLConstraint `yaml:"constraints,omitempty"`
 }
 
 type YAMLConstraint map[string]float64
@@ -80,9 +81,10 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 
 	for _, yamlcolumn := range yamlconfig.Columns {
 		column := mimo.ColumnConfig{
-			Exclude:      yamlcolumn.Exclude,
-			CoherentWith: yamlcolumn.CoherentWith,
-			Constraints:  []mimo.Constraint{},
+			Exclude:        yamlcolumn.Exclude,
+			CoherentWith:   yamlcolumn.CoherentWith,
+			CoherentSource: yamlcolumn.CoherentSource,
+			Constraints:    []mimo.Constraint{},
 		}
 
 		for target, yamlconstraint := range yamlcolumn.Constraints {
