@@ -306,21 +306,19 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
-	if config, ok := r.config.ColumnConfigs[key]; ok {
-		if len(config.Alias) > 0 {
-			key = config.Alias
-		}
+	config := NewDefaultColumnConfig()
+	if cfg, ok := r.config.ColumnConfigs[key]; ok {
+		config = cfg
+	}
+
+	if len(config.Alias) > 0 {
+		key = config.Alias
 	}
 
 	metrics, exists := r.Metrics[key]
 	if !exists {
 		metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
 		r.subs.PostNewField(key)
-	}
-
-	config := NewDefaultColumnConfig()
-	if cfg, ok := r.config.ColumnConfigs[key]; ok {
-		config = cfg
 	}
 
 	coherenceValues := computeCoherenceValues(config, root, stack)
