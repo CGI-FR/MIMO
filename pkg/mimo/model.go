@@ -104,7 +104,7 @@ func (m *Metrics) Update(
 		return true
 	}
 
-	if slices.Contains(config.Exclude, realValue) {
+	if isExcluded(config.Exclude, realValue, realValueStr) {
 		m.EmptyCount++
 
 		return true
@@ -422,4 +422,18 @@ func validate(constraint ConstraintType, reference float64, value float64) bool 
 	default:
 		return false
 	}
+}
+
+func isExcluded(exclude []any, value any, valueStr string) bool {
+	if slices.Contains(exclude, value) {
+		return true
+	}
+
+	for _, exVal := range exclude {
+		if exValStr, ok := toString(exVal); ok && valueStr == exValStr {
+			return true
+		}
+	}
+
+	return false
 }
