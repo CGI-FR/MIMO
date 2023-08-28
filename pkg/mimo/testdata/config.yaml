@@ -1,0 +1,7 @@
+version: "1"
+metrics:
+  - name: "user.login"
+    exclude: ["", 14]
+    coherentWith: ["node_id", "user"]
+    coherentSource: "{{$a := Stack -1}}{{$a.number}}  {{.}}"
+    alias: "login"
