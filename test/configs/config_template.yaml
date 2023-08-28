@@ -1,0 +1,4 @@
+version: "1"
+metrics:
+  - name: "batchs.[].accounts.[].number"
+    coherentSource: "{{$batch := Stack -3}}{{Stack 0}} + {{$batch.id}}"

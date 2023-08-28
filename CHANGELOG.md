@@ -20,6 +20,7 @@ Types of changes
 - `Added` computation on disk instead of memory with `--diskstorage` flag.
 - `Added` analysis of deep nested structures (arrays and objects).
 - `Added` validated constraints use a different shade of green in HTML report.
+- `Added` possibility to use template string to generate coherent source with `coherentSource` parameter.
 
 ## [0.2.1]
 

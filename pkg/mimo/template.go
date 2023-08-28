@@ -58,10 +58,10 @@ func generateFuncMap() template.FuncMap {
 func generateStackFunc(theStack []any) func(index int) any {
 	return func(index int) any {
 		if index > 0 {
-			return theStack[index]
+			return theStack[index-1]
 		}
 
-		return theStack[len(theStack)+index]
+		return theStack[len(theStack)+index-1]
 	}
 }
 
