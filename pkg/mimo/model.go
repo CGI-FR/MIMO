@@ -23,7 +23,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"text/template"
 
 	"github.com/ohler55/ojg/jp"
 	"github.com/rs/zerolog/log"
@@ -329,17 +328,13 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 	}
 
 	if len(config.CoherentSource) > 0 {
-		log.Info().Str("template", config.CoherentSource).Msg("coherence source")
-		tmpl, err := template.New("template").
-			Funcs(template.FuncMap{"Stack": stackBrowserFunc(stack)}).
-			Parse(config.CoherentSource)
-		log.Err(err).Msg("parsing template")
+		source, err := generateCoherentSource(config.CoherentSource, root, stack)
 
-		result := &strings.Builder{}
-		err = tmpl.Execute(result, root)
-		log.Err(err).Msg("executing template")
+		log.Err(err).Str("result", source).Msg("generating coherence source from template")
 
-		coherenceValues = append(coherenceValues, result.String()) //nolint:makezero
+		if err == nil {
+			coherenceValues = append(coherenceValues, source) //nolint:makezero
+		}
 	}
 
 	if len(coherenceValues) == 0 {
@@ -417,15 +412,5 @@ func validate(constraint ConstraintType, reference float64, value float64) bool 
 		return value <= reference
 	default:
 		return false
-	}
-}
-
-func stackBrowserFunc(theStack []any) func(index int) any {
-	return func(index int) any {
-		if index > 0 {
-			return theStack[index]
-		} else {
-			return theStack[len(theStack)+index]
-		}
 	}
 }
