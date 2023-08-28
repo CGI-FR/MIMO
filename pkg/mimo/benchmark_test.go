@@ -52,3 +52,37 @@ func BenchmarkInMemory(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkOnDisk(b *testing.B) {
+	realReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/real.jsonl")
+	if err != nil {
+		b.FailNow()
+	}
+
+	maskedReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/masked.jsonl")
+	if err != nil {
+		b.FailNow()
+	}
+
+	driver := mimo.NewDriver(
+		realReader,
+		maskedReader,
+		func(fieldname string) mimo.Multimap {
+			factory, err := infra.PebbleMultimapFactory("")
+			if err != nil {
+				b.FailNow()
+			}
+
+			return factory
+		},
+		infra.SubscriberLogger{},
+	)
+
+	defer driver.Close()
+
+	for n := 0; n < b.N; n++ {
+		if _, err := driver.Analyze(); err != nil {
+			b.FailNow()
+		}
+	}
+}
