@@ -42,6 +42,7 @@ type YAMLColumn struct {
 	CoherentWith   []string                  `yaml:"coherentWith,omitempty"`
 	CoherentSource string                    `yaml:"coherentSource,omitempty"`
 	Constraints    map[string]YAMLConstraint `yaml:"constraints,omitempty"`
+	Alias          string                    `yaml:"alias,omitempty"`
 }
 
 type YAMLConstraint map[string]float64
@@ -85,6 +86,7 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 			CoherentWith:   yamlcolumn.CoherentWith,
 			CoherentSource: yamlcolumn.CoherentSource,
 			Constraints:    []mimo.Constraint{},
+			Alias:          yamlcolumn.Alias,
 		}
 
 		for target, yamlconstraint := range yamlcolumn.Constraints {

@@ -306,6 +306,12 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
+	if config, ok := r.config.ColumnConfigs[key]; ok {
+		if len(config.Alias) > 0 {
+			key = config.Alias
+		}
+	}
+
 	metrics, exists := r.Metrics[key]
 	if !exists {
 		metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
@@ -317,6 +323,20 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		config = cfg
 	}
 
+	coherenceValues := computeCoherenceValues(config, root, stack)
+	if len(coherenceValues) == 0 {
+		coherenceValues = []any{realValue}
+	}
+
+	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
+		metrics.Coherence.Close()
+		metrics.Identifiant.Close()
+	} else {
+		r.Metrics[key] = metrics
+	}
+}
+
+func computeCoherenceValues(config ColumnConfig, root DataRow, stack []any) []any {
 	coherenceValues := make([]any, len(config.CoherentWith))
 
 	for i, coherentColumn := range config.CoherentWith {
@@ -337,16 +357,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		}
 	}
 
-	if len(coherenceValues) == 0 {
-		coherenceValues = []any{realValue}
-	}
-
-	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
-		metrics.Coherence.Close()
-		metrics.Identifiant.Close()
-	} else {
-		r.Metrics[key] = metrics
-	}
+	return coherenceValues
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
