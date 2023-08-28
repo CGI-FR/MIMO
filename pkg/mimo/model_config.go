@@ -23,9 +23,10 @@ type Config struct {
 }
 
 type ColumnConfig struct {
-	Exclude      []any        // exclude values from the masking rate computation (default: exclude only nil values)
-	CoherentWith []string     // list of fields from witch the coherent rate is computed (default: the current field)
-	Constraints  []Constraint // list of constraints to validate
+	Exclude        []any        // exclude values from the masking rate computation (default: exclude only nil values)
+	CoherentWith   []string     // list of fields from witch the coherent rate is computed (default: the current field)
+	CoherentSource string       // template to execute to create coherence source.
+	Constraints    []Constraint // list of constraints to validate
 }
 
 type Constraint struct {
@@ -61,8 +62,9 @@ func NewConfig() Config {
 
 func NewDefaultColumnConfig() ColumnConfig {
 	return ColumnConfig{
-		Exclude:      []any{},
-		CoherentWith: []string{},
-		Constraints:  []Constraint{},
+		Exclude:        []any{},
+		CoherentWith:   []string{},
+		CoherentSource: "",
+		Constraints:    []Constraint{},
 	}
 }

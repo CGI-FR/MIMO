@@ -247,14 +247,14 @@ func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFa
 	return Report{make(map[string]Metrics), subs, config, multiMapFactory}
 }
 
-func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, path ...string) {
+func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, stack []any, path ...string) {
 	for key, realValue := range realRow {
 		newpath := append(path, key) //nolint:gocritic
 
 		switch typedRealValue := realValue.(type) {
 		case map[string]any:
 			if typedMaskedValue, ok := maskedRow[key].(map[string]any); ok {
-				r.UpdateDeep(root, typedRealValue, typedMaskedValue, newpath...)
+				r.UpdateDeep(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
 			} else {
 				log.Warn().
 					Strs("path", newpath).
@@ -262,10 +262,10 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, pat
 			}
 		case []any:
 			if typedMaskedValue, ok := maskedRow[key].([]any); ok {
-				r.UpdateArray(root, typedRealValue, typedMaskedValue, newpath...)
+				r.UpdateArray(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
 			}
 		case nil, any:
-			r.UpdateValue(root, typedRealValue, maskedRow[key], newpath...)
+			r.UpdateValue(root, typedRealValue, maskedRow[key], append(stack, realValue), newpath...)
 		default:
 			log.Warn().
 				Strs("path", newpath).
@@ -274,14 +274,14 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, pat
 	}
 }
 
-func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, path ...string) {
+func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, stack []any, path ...string) {
 	for index := 0; index < len(realArray) && index < len(maskedArray); index++ {
 		newpath := append(path, "[]") //nolint:gocritic
 
 		switch typedRealItem := realArray[index].(type) {
 		case map[string]any:
 			if typedMaskedItem, ok := maskedArray[index].(map[string]any); ok {
-				r.UpdateDeep(root, typedRealItem, typedMaskedItem, newpath...)
+				r.UpdateDeep(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
 			} else {
 				log.Warn().
 					Strs("path", newpath).
@@ -290,10 +290,10 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, pa
 			}
 		case []any:
 			if typedMaskedItem, ok := maskedArray[index].([]any); ok {
-				r.UpdateArray(root, typedRealItem, typedMaskedItem, newpath...)
+				r.UpdateArray(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
 			}
 		case nil, any:
-			r.UpdateValue(root, typedRealItem, maskedArray[index], newpath...)
+			r.UpdateValue(root, typedRealItem, maskedArray[index], append(stack, realArray[index]), newpath...)
 		default:
 			log.Warn().
 				Strs("path", newpath).
@@ -303,7 +303,7 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, pa
 	}
 }
 
-func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, path ...string) {
+func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
 	metrics, exists := r.Metrics[key]
@@ -327,6 +327,16 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, path .
 		}
 	}
 
+	if len(config.CoherentSource) > 0 {
+		source, err := generateCoherentSource(config.CoherentSource, root, stack)
+
+		log.Err(err).Str("result", source).Msg("generating coherence source from template")
+
+		if err == nil {
+			coherenceValues = append(coherenceValues, source) //nolint:makezero
+		}
+	}
+
 	if len(coherenceValues) == 0 {
 		coherenceValues = []any{realValue}
 	}
@@ -340,7 +350,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, path .
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
-	r.UpdateDeep(realRow, realRow, maskedRow)
+	r.UpdateDeep(realRow, realRow, maskedRow, []any{})
 }
 
 func (r Report) Columns() []string {
