@@ -22,9 +22,12 @@ import (
 
 	"github.com/cgi-fr/mimo/internal/infra"
 	"github.com/cgi-fr/mimo/pkg/mimo"
+	"github.com/rs/zerolog"
 )
 
 func BenchmarkInMemory(b *testing.B) {
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+
 	realReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/real.jsonl")
 	if err != nil {
 		b.FailNow()
@@ -54,6 +57,8 @@ func BenchmarkInMemory(b *testing.B) {
 }
 
 func BenchmarkOnDisk(b *testing.B) {
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+
 	realReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/real.jsonl")
 	if err != nil {
 		b.FailNow()
