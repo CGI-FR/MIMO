@@ -21,6 +21,8 @@ Types of changes
 - `Added` analysis of deep nested structures (arrays and objects).
 - `Added` validated constraints use a different shade of green in HTML report.
 - `Added` possibility to use template string to generate coherent source with `coherentSource` parameter.
+- `Added` possibility to configure a column name alias with the `alias` parameter.
+- `Fixed` excluding numeric values.
 
 ## [0.2.1]
 

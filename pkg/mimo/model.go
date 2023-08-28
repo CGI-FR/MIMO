@@ -104,7 +104,7 @@ func (m *Metrics) Update(
 		return true
 	}
 
-	if slices.Contains(config.Exclude, realValue) {
+	if isExcluded(config.Exclude, realValue, realValueStr) {
 		m.EmptyCount++
 
 		return true
@@ -306,17 +306,35 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
+	config := NewDefaultColumnConfig()
+	if cfg, ok := r.config.ColumnConfigs[key]; ok {
+		config = cfg
+	}
+
+	if len(config.Alias) > 0 {
+		key = config.Alias
+	}
+
 	metrics, exists := r.Metrics[key]
 	if !exists {
 		metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
 		r.subs.PostNewField(key)
 	}
 
-	config := NewDefaultColumnConfig()
-	if cfg, ok := r.config.ColumnConfigs[key]; ok {
-		config = cfg
+	coherenceValues := computeCoherenceValues(config, root, stack)
+	if len(coherenceValues) == 0 {
+		coherenceValues = []any{realValue}
 	}
 
+	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
+		metrics.Coherence.Close()
+		metrics.Identifiant.Close()
+	} else {
+		r.Metrics[key] = metrics
+	}
+}
+
+func computeCoherenceValues(config ColumnConfig, root DataRow, stack []any) []any {
 	coherenceValues := make([]any, len(config.CoherentWith))
 
 	for i, coherentColumn := range config.CoherentWith {
@@ -337,16 +355,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		}
 	}
 
-	if len(coherenceValues) == 0 {
-		coherenceValues = []any{realValue}
-	}
-
-	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
-		metrics.Coherence.Close()
-		metrics.Identifiant.Close()
-	} else {
-		r.Metrics[key] = metrics
-	}
+	return coherenceValues
 }
 
 func (r Report) Update(realRow DataRow, maskedRow DataRow) {
@@ -413,4 +422,18 @@ func validate(constraint ConstraintType, reference float64, value float64) bool 
 	default:
 		return false
 	}
+}
+
+func isExcluded(exclude []any, value any, valueStr string) bool {
+	if slices.Contains(exclude, value) {
+		return true
+	}
+
+	for _, exVal := range exclude {
+		if exValStr, ok := toString(exVal); ok && valueStr == exValStr {
+			return true
+		}
+	}
+
+	return false
 }
