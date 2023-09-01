@@ -69,7 +69,9 @@
                     "--disable",
                     "structcheck",
                     "--disable",
-                    "deadcode"
+                    "deadcode",
+                    "--disable",
+                    "depguard"
                 ],
                 // Golang on save
                 "go.buildOnSave": "workspace",
