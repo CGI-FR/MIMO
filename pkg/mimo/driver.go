@@ -70,6 +70,8 @@ func (d *Driver) Analyze() (Report, error) {
 
 		log.Trace().Interface("real", realRow).Interface("masked", maskedRow).Msg("read rows")
 
+		d.preprocess(realRow)
+		d.preprocess(maskedRow)
 		d.report.Update(realRow, maskedRow)
 	}
 

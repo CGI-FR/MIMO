@@ -31,8 +31,9 @@ const Version string = "1"
 
 // YAMLStructure of the file.
 type YAMLStructure struct {
-	Version string       `yaml:"version"`
-	Columns []YAMLColumn `yaml:"metrics,omitempty"`
+	Version      string           `yaml:"version"`
+	Columns      []YAMLColumn     `yaml:"metrics,omitempty"`
+	Preprocesses []YAMLPreprocess `yaml:"preprocess,omitempty"`
 }
 
 // YAMLColumn defines how to store a column config in YAML format.
@@ -45,12 +46,18 @@ type YAMLColumn struct {
 	Alias          string                    `yaml:"alias,omitempty"`
 }
 
+type YAMLPreprocess struct {
+	Path  string `yaml:"path"`
+	Value string `yaml:"value"`
+}
+
 type YAMLConstraint map[string]float64
 
 func LoadConfig(filename string) (mimo.Config, error) {
 	config := &YAMLStructure{
-		Version: Version,
-		Columns: []YAMLColumn{},
+		Version:      Version,
+		Columns:      []YAMLColumn{},
+		Preprocesses: []YAMLPreprocess{},
 	}
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
@@ -79,6 +86,8 @@ func LoadConfig(filename string) (mimo.Config, error) {
 //nolint:cyclop
 func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 	config := mimo.NewConfig()
+
+	CreatePreprocesses(yamlconfig, &config)
 
 	for _, yamlcolumn := range yamlconfig.Columns {
 		column := mimo.ColumnConfig{
@@ -132,4 +141,14 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 	}
 
 	return config, nil
+}
+
+func CreatePreprocesses(yamlconfig *YAMLStructure, config *mimo.Config) {
+	for _, yamlpreprocess := range yamlconfig.Preprocesses {
+		preprocess := mimo.PreprocessConfig{
+			Path:  yamlpreprocess.Path,
+			Value: yamlpreprocess.Value,
+		}
+		config.PreprocessConfigs = append(config.PreprocessConfigs, preprocess)
+	}
 }
