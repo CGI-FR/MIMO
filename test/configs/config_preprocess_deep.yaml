@@ -1,0 +1,4 @@
+version: "1"
+preprocess:
+  - path: "batchs.[].accounts.[].number_clean"
+    value: "{{$account := Stack 0}}{{$account.number | trim}}"

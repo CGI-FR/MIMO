@@ -1,0 +1,7 @@
+version: "1"
+preprocess:
+  - path: "idutil"
+    value: "{{.id}} - {{.name}} {{.surname}}"
+metrics:
+  - name: "idutil"
+    coherentWith: ["id"]

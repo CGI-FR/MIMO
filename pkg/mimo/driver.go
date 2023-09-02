@@ -82,7 +82,7 @@ func (d Driver) Close() error {
 	errors := []error{}
 
 	for key, metric := range d.report.Metrics {
-		log.Info().Str("key", key).Msg("Close metrics")
+		log.Info().Str("key", key).Msg("close metrics")
 
 		err := metric.Coherence.Close()
 		if err != nil {
