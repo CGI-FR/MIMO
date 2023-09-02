@@ -12,7 +12,7 @@
     <thead>
       <th>Field</th>
       <th>Nil</th>
-      <th>Empty</th>
+      <th>Ignored</th>
       <th>Masked</th>
       <th>Missed</th>
       <th>Masking Rate</th>
@@ -25,7 +25,7 @@
       <tr>
         <td>{{ $key }}</td>
         <td>{{ $value.NilCount }}</td>
-        <td>{{ $value.EmptyCount }}</td>
+        <td>{{ $value.IgnoredCount }}</td>
         <td>{{ $value.MaskedCount }}</td>
         <td>{{ $value.NonMaskedCount }}</td>
         <td style="background-color: {{ if $value.MaskedRateValidate | eq 1 }}green{{else if $value.MaskedRateValidate | eq -1}}red{{else if $value.MaskedRate | eq 1.00 }}lightgreen{{else}}orange{{end}}">{{ if ne (toString $value.MaskedRate) "NaN" }}{{ $value.MaskedRate | mulf 100.00 | printf "%0.02f" }} %{{ else }}NaN{{ end }}</td>
