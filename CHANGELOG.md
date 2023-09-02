@@ -14,6 +14,10 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.4.0]
+
+- `Added` possibility to create temporary fields with the `preprocess` configuration.
+
 ## [0.3.0]
 
 - `Added` persistance feature with `--persist` flag.
