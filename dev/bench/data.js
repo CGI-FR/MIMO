@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1693398534013,
+  "lastUpdate": 1693646213662,
   "repoUrl": "https://github.com/CGI-FR/MIMO",
   "entries": {
     "Benchmark": [
@@ -180,6 +180,66 @@ window.BENCHMARK_DATA = {
             "value": 2,
             "unit": "allocs/op",
             "extra": "140058799 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44274230+adrienaury@users.noreply.github.com",
+            "name": "Adrien Aury",
+            "username": "adrienaury"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "bd675149bbe123bd37467ab2f2e23f2d6c9dd061",
+          "message": "feat: pre processing step (#21)\n\n* chore(devcontainer): disable depguard\r\n\r\n* feat(preprocess): wip! minimal impl\r\n\r\n* chore(build): add test-int-debug target\r\n\r\n* test(preprocess): add venom case\r\n\r\n* docs(preprocess): update changelog",
+          "timestamp": "2023-09-02T11:13:33+02:00",
+          "tree_id": "e81f7e125f4a32a69bc475435775f708f8bddda2",
+          "url": "https://github.com/CGI-FR/MIMO/commit/bd675149bbe123bd37467ab2f2e23f2d6c9dd061"
+        },
+        "date": 1693646213155,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkInMemory - ns/op",
+            "value": 87.35,
+            "unit": "ns/op",
+            "extra": "135890902 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "135890902 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "135890902 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - ns/op",
+            "value": 89.46,
+            "unit": "ns/op",
+            "extra": "131261193 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "131261193 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "131261193 times\n2 procs"
           }
         ]
       }
