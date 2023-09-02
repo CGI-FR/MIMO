@@ -184,7 +184,7 @@ func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool 
 		log.Info().
 			Str("field", colname).
 			Int64("count-nil", metrics.NilCount).
-			Int64("count-empty", metrics.EmptyCount).
+			Int64("count-ignored", metrics.IgnoredCount).
 			Int64("count-masked", metrics.MaskedCount).
 			Int64("count-missed", metrics.NonMaskedCount()).
 			Float64("rate-masking", metrics.MaskedRate()).
@@ -195,7 +195,7 @@ func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool 
 		log.Error().
 			Str("field", colname).
 			Int64("count-nil", metrics.NilCount).
-			Int64("count-empty", metrics.EmptyCount).
+			Int64("count-ignored", metrics.IgnoredCount).
 			Int64("count-masked", metrics.MaskedCount).
 			Int64("count-missed", metrics.NonMaskedCount()).
 			Float64("rate-masking", metrics.MaskedRate()).
