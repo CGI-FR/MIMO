@@ -53,6 +53,7 @@ properties:
       "exhaustivestruct",
       "depguard",
     ]
+  testsuites: "*.yml"
   snapshot: false # If true, do not upload release when publish target is used
   dockerfiles: # List of Dockerfiles to build, defined by a map of {key=Dockerfile name ; value=path to build context}, the image name will be determined by the extension of the Dockerfile
     Dockerfile: . # Build a file named Dockerfile at the root of the workspace, will produce image name "<DOCKERHUB_USER>/<PROJECT>"
@@ -246,6 +247,15 @@ targets:
     steps:
       - ldflags = ldflags + " -s -w" # Omit the DWARF symbol table. Omit the symbol table and debug information.
       - call: compile
+
+  # to debug a single test use :
+  # neon -props '{testsuites: "<test suite filename>"}' test-int-debug
+  test-int-debug:
+    doc: "Run all integration tests"
+    depends: ["info"]
+    steps:
+      - delete: venom*.log
+      - $: venom run test/suites/={testsuites}
 
   test-int:
     doc: "Run all integration tests"

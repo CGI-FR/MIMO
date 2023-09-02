@@ -18,8 +18,9 @@
 package mimo
 
 type Config struct {
-	ColumnNames   []string
-	ColumnConfigs map[string]ColumnConfig
+	ColumnNames       []string
+	ColumnConfigs     map[string]ColumnConfig
+	PreprocessConfigs []PreprocessConfig
 }
 
 type ColumnConfig struct {
@@ -28,6 +29,11 @@ type ColumnConfig struct {
 	CoherentSource string       // template to execute to create coherence source
 	Constraints    []Constraint // list of constraints to validate
 	Alias          string       // alias to use in persisted data
+}
+
+type PreprocessConfig struct {
+	Path  string
+	Value string
 }
 
 type Constraint struct {
@@ -56,8 +62,9 @@ const (
 
 func NewConfig() Config {
 	return Config{
-		ColumnNames:   []string{},
-		ColumnConfigs: map[string]ColumnConfig{},
+		ColumnNames:       []string{},
+		ColumnConfigs:     map[string]ColumnConfig{},
+		PreprocessConfigs: []PreprocessConfig{},
 	}
 }
 
