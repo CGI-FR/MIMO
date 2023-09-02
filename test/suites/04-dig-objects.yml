@@ -13,8 +13,8 @@ testcases:
       - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring person.age count-empty=0 count-masked=2 count-missed=0 count-nil=0 field=person.age rate-coherence=1 rate-identifiable=1 rate-masking=1
-          - result.systemerr ShouldContainSubstring person.address.street count-empty=0 count-masked=2 count-missed=0 count-nil=0 field=person.address.street rate-coherence=0 rate-identifiable=1 rate-masking=1
+          - result.systemerr ShouldContainSubstring person.age count-ignored=0 count-masked=2 count-missed=0 count-nil=0 field=person.age rate-coherence=1 rate-identifiable=1 rate-masking=1
+          - result.systemerr ShouldContainSubstring person.address.street count-ignored=0 count-masked=2 count-missed=0 count-nil=0 field=person.address.street rate-coherence=0 rate-identifiable=1 rate-masking=1
 
       - script: mv report.html ../reports/report_deep_object.html
 
@@ -29,8 +29,8 @@ testcases:
       - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring groups.[] count-empty=0 count-masked=2 count-missed=2 count-nil=0 field=groups.[] rate-coherence=1 rate-identifiable=1 rate-masking=0.5
-          - result.systemerr ShouldContainSubstring groups.[].[] count-empty=0 count-masked=4 count-missed=0 count-nil=0 field=groups.[].[] rate-coherence=1 rate-identifiable=0 rate-masking=1
+          - result.systemerr ShouldContainSubstring groups.[] count-ignored=0 count-masked=2 count-missed=2 count-nil=0 field=groups.[] rate-coherence=1 rate-identifiable=1 rate-masking=0.5
+          - result.systemerr ShouldContainSubstring groups.[].[] count-ignored=0 count-masked=4 count-missed=0 count-nil=0 field=groups.[].[] rate-coherence=1 rate-identifiable=0 rate-masking=1
 
       - script: mv report.html ../reports/report_deep_array.html
 
@@ -45,7 +45,7 @@ testcases:
       - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring batchs.[].id count-empty=0 count-masked=0 count-missed=3 count-nil=0 field=batchs.[].id rate-coherence=1 rate-identifiable=1 rate-masking=0
-          - result.systemerr ShouldContainSubstring batchs.[].accounts.[].number count-empty=0 count-masked=4 count-missed=0 count-nil=0 field=batchs.[].accounts.[].number rate-coherence=1 rate-identifiable=1 rate-masking=1
+          - result.systemerr ShouldContainSubstring batchs.[].id count-ignored=0 count-masked=0 count-missed=3 count-nil=0 field=batchs.[].id rate-coherence=1 rate-identifiable=1 rate-masking=0
+          - result.systemerr ShouldContainSubstring batchs.[].accounts.[].number count-ignored=0 count-masked=4 count-missed=0 count-nil=0 field=batchs.[].accounts.[].number rate-coherence=1 rate-identifiable=1 rate-masking=1
 
       - script: mv report.html ../reports/report_deep_mixed.html

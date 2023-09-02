@@ -41,6 +41,6 @@ testcases:
       - script: cat working/masked.jsonl | mimo -v5 --config ../configs/config_alias.yaml --disk-storage --persist working/data/ working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=4 count-missed=1 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
+          - result.systemerr ShouldContainSubstring value count-ignored=0 count-masked=4 count-missed=1 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
 
       - script: mv report.html ../reports/report_reuse_previous_alias.html
