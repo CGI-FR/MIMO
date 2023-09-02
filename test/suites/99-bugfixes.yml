@@ -16,7 +16,7 @@ testcases:
       - script: cat working/masked.jsonl | mimo -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring value count-empty=0 count-masked=0 count-missed=0 count-nil=4 field=value rate-coherence=0 rate-identifiable=1 rate-masking=NaN
+          - result.systemerr ShouldContainSubstring value count-ignored=0 count-masked=0 count-missed=0 count-nil=4 field=value rate-coherence=0 rate-identifiable=1 rate-masking=NaN
 
       - script: mv report.html ../reports/report_bugfix_1.html
 
@@ -35,6 +35,6 @@ testcases:
       - script: cat working/masked.jsonl | mimo --config ../configs/config_exclude_numeric.yaml -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring value count-empty=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=1 rate-masking=1
+          - result.systemerr ShouldContainSubstring value count-ignored=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=1 rate-masking=1
 
       - script: mv report.html ../reports/report_bugfix_exclude_numeric.html

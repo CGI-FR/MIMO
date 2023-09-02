@@ -17,6 +17,7 @@ Types of changes
 ## [0.4.0]
 
 - `Added` possibility to create temporary fields with the `preprocess` configuration.
+- `Fixed` rename label `empty` to `ignored` in report.
 
 ## [0.3.0]
 
