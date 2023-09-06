@@ -75,8 +75,10 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 				Msg("start MIMO")
 		},
 		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd, args[0])
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := run(cmd, args[0]); err != nil {
+				log.Fatal().Err(err).Msg("end MIMO")
+			}
 		},
 		PersistentPostRun: func(cmd *cobra.Command, args []string) {
 			log.Info().Int("return", 0).Msg("end MIMO")
@@ -105,14 +107,14 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	maskedReader := infra.NewDataRowReaderJSONLine(os.Stdin, os.Stdout)
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("end MIMO")
+		return fmt.Errorf("%w", err)
 	}
 
 	var config mimo.Config
 
 	if configfile != "" {
 		if config, err = infra.LoadConfig(configfile); err != nil {
-			log.Fatal().Err(err).Msg("end MIMO")
+			return fmt.Errorf("%w", err)
 		}
 	}
 

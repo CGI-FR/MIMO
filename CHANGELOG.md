@@ -14,6 +14,10 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.4.1]
+
+- `Fixed` error handling, fatal errors will not print mimo help.
+
 ## [0.4.0]
 
 - `Added` possibility to create temporary fields with the `preprocess` configuration.
