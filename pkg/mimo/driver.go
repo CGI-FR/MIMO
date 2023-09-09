@@ -94,6 +94,11 @@ func (d Driver) Close() error {
 		if err != nil {
 			errors = append(errors, err)
 		}
+
+		err = metric.backend.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
 
 	if len(errors) > 0 {

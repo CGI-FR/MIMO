@@ -55,3 +55,7 @@ func (b *InMemoryCounterBackend) IncreaseMaskedCount() {
 func (b *InMemoryCounterBackend) GetMaskedCount() int64 {
 	return b.MaskedCount
 }
+
+func (b *InMemoryCounterBackend) Close() error {
+	return nil
+}

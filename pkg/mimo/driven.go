@@ -54,4 +54,6 @@ type CounterBackend interface {
 
 	IncreaseMaskedCount()
 	GetMaskedCount() int64
+
+	Close() error
 }
