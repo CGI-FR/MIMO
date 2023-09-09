@@ -34,13 +34,14 @@ func NewDriver(
 	realReader DataRowReader,
 	maskedReader DataRowReader,
 	multimapFactory MultimapFactory,
+	counterFactory CounterFactory,
 	subs ...EventSubscriber,
 ) Driver {
 	return Driver{
 		realDataSource: realReader,
 		maskDataSource: maskedReader,
 		subscribers:    subs,
-		report:         NewReport(subs, NewConfig(), multimapFactory),
+		report:         NewReport(subs, NewConfig(), multimapFactory, counterFactory),
 	}
 }
 
@@ -90,6 +91,11 @@ func (d Driver) Close() error {
 		}
 
 		err = metric.Identifiant.Close()
+		if err != nil {
+			errors = append(errors, err)
+		}
+
+		err = metric.backend.Close()
 		if err != nil {
 			errors = append(errors, err)
 		}

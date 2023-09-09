@@ -44,6 +44,14 @@ func BenchmarkInMemory(b *testing.B) {
 		func(fieldname string) mimo.Multimap {
 			return mimo.Multimap{Backend: mimo.InMemoryMultimapBackend{}}
 		},
+		func(fieldname string) mimo.CounterBackend {
+			return &mimo.InMemoryCounterBackend{
+				TotalCount:   0,
+				NilCount:     0,
+				IgnoredCount: 0,
+				MaskedCount:  0,
+			}
+		},
 		infra.SubscriberLogger{},
 	)
 
@@ -74,6 +82,14 @@ func BenchmarkOnDisk(b *testing.B) {
 		maskedReader,
 		func(fieldname string) mimo.Multimap {
 			factory, err := infra.PebbleMultimapFactory("")
+			if err != nil {
+				b.FailNow()
+			}
+
+			return factory
+		},
+		func(fieldname string) mimo.CounterBackend {
+			factory, err := infra.PebbleCounterBackendFactory("")
 			if err != nil {
 				b.FailNow()
 			}

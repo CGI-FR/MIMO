@@ -100,7 +100,7 @@ testcases:
       - script: echo '{"value":"C"}' >> working/masked.jsonl
       - script: echo '{"value":"C"}' >> working/masked.jsonl
 
-      - script: cat working/masked.jsonl | mimo -v3 --disk-storage --persist working/data/ working/real.jsonl
+      - script: cat working/masked.jsonl | mimo -v3 --persist working/data/ working/real.jsonl
 
       - script: echo '{"value":"C"}' > working/real.jsonl
       - script: echo '{"value":"D"}' >> working/real.jsonl
@@ -120,9 +120,9 @@ testcases:
       - script: echo '{}' >> working/masked.jsonl
       - script: echo '{"object":{"hello":{}}}' >> working/masked.jsonl
 
-      - script: cat working/masked.jsonl | mimo -v5 --disk-storage --persist working/data/ working/real.jsonl
+      - script: cat working/masked.jsonl | mimo -v3 --persist working/data/ working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring value count-ignored=0 count-masked=4 count-missed=1 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
+          - result.systemerr ShouldContainSubstring value count-ignored=0 count-masked=8 count-missed=2 count-nil=1 field=value rate-coherence=0.6666666666666666 rate-identifiable=0.6 rate-masking=0.8
 
       - script: mv report.html ../reports/report_reuse_previous.html
