@@ -45,28 +45,27 @@ func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 }
 
 type Metrics struct {
-	Fieldname    string       // Fieldname is name of column analyzed
-	TotalCount   int64        // TotalCount is the number of values analyzed
-	NilCount     int64        // NilCount is the number of null values in real data
-	IgnoredCount int64        // IgnoredCount is the number of ignored values in real data
-	MaskedCount  int64        // MaskedCount is the number of non-blank real values masked
-	Coherence    Multimap     // Coherence is a multimap used to compute the coherence rate
-	Identifiant  Multimap     // Identifiant is a multimap used to compute the identifiable rate
-	Constraints  []Constraint // Constraints is the set of rules to validate
+	Fieldname   string         // Fieldname is name of column analyzed
+	Coherence   Multimap       // Coherence is a multimap used to compute the coherence rate
+	Identifiant Multimap       // Identifiant is a multimap used to compute the identifiable rate
+	Constraints []Constraint   // Constraints is the set of rules to validate
+	backend     CounterBackend // Backend counters storage
 }
 
-type MultimapFactory func(fieldname string) Multimap
+type (
+	MultimapFactory func(fieldname string) Multimap
+	CounterFactory  func(fieldname string) CounterBackend
+)
 
-func NewMetrics(fieldname string, multimapFactory MultimapFactory, constraints ...Constraint) Metrics {
+func NewMetrics(
+	fieldname string, multimapFactory MultimapFactory, counterFactory CounterFactory, constraints ...Constraint,
+) Metrics {
 	return Metrics{
-		Fieldname:    fieldname,
-		TotalCount:   0,
-		NilCount:     0,
-		IgnoredCount: 0,
-		MaskedCount:  0,
-		Coherence:    multimapFactory(fieldname + "-coherence"),
-		Identifiant:  multimapFactory(fieldname + "-identifiant"),
-		Constraints:  constraints,
+		Fieldname:   fieldname,
+		Coherence:   multimapFactory(fieldname + "-coherence"),
+		Identifiant: multimapFactory(fieldname + "-identifiant"),
+		Constraints: constraints,
+		backend:     counterFactory(fieldname + "-counters"),
 	}
 }
 
@@ -87,7 +86,7 @@ func (m *Metrics) Update(
 		return false // special case (arrays, objects) are not covered right now
 	}
 
-	m.TotalCount++
+	m.backend.IncreaseTotalCount()
 
 	m.Coherence.Add(toStringSlice(coherenceValue), maskedValueStr)
 	m.Identifiant.Add(maskedValueStr, realValueStr)
@@ -99,21 +98,21 @@ func (m *Metrics) Update(
 		Msg("stored")
 
 	if realValue == nil {
-		m.NilCount++
+		m.backend.IncreaseNilCount()
 
 		return true
 	}
 
 	if isExcluded(config.Exclude, realValue, realValueStr) {
-		m.IgnoredCount++
+		m.backend.IncreaseIgnoredCount()
 
 		return true
 	}
 
 	if realValueOk && maskedValueOk {
 		if realValueStr != maskedValueStr {
-			m.MaskedCount++
-		} else if m.MaskedCount == nonBlankCount {
+			m.backend.IncreaseMaskedCount()
+		} else if m.backend.GetMaskedCount() == nonBlankCount {
 			subs.PostFirstNonMaskedValue(fieldname, realValue)
 		}
 	}
@@ -121,19 +120,31 @@ func (m *Metrics) Update(
 	return true
 }
 
+func (m Metrics) NilCount() int64 {
+	return m.backend.GetNilCount()
+}
+
+func (m Metrics) IgnoredCount() int64 {
+	return m.backend.GetIgnoredCount()
+}
+
+func (m Metrics) MaskedCount() int64 {
+	return m.backend.GetMaskedCount()
+}
+
 // BlankCount is the number of blank (null or ignored) values in real data.
 func (m Metrics) BlankCount() int64 {
-	return m.NilCount + m.IgnoredCount
+	return m.backend.GetNilCount() + m.backend.GetIgnoredCount()
 }
 
 // NonBlankCount is the number of non-blank (non-null and non-ignored) values in real data.
 func (m Metrics) NonBlankCount() int64 {
-	return m.TotalCount - m.BlankCount()
+	return m.backend.GetTotalCount() - m.BlankCount()
 }
 
 // NonMaskedCount is the number of non-blank (non-null and non-ignored) values in real data that were not masked.
 func (m Metrics) NonMaskedCount() int64 {
-	return m.NonBlankCount() - m.MaskedCount
+	return m.NonBlankCount() - m.backend.GetMaskedCount()
 }
 
 // K is the minimum number of value pseudonym was attributed.
@@ -146,7 +157,7 @@ func (m Metrics) K() int {
 //	Number of non-blank real values masked
 //	  / (Number of values analyzed - Number of blank (null or ignored) values in real data) ).
 func (m Metrics) MaskedRate() float64 {
-	return float64(m.MaskedCount) / float64(m.NonBlankCount())
+	return float64(m.backend.GetMaskedCount()) / float64(m.NonBlankCount())
 }
 
 // MaskedRateValidate returns :
@@ -241,10 +252,13 @@ type Report struct {
 	subs            Suscribers
 	config          Config
 	multiMapFactory MultimapFactory
+	counterFactory  CounterFactory
 }
 
-func NewReport(subs []EventSubscriber, config Config, multiMapFactory MultimapFactory) Report {
-	return Report{make(map[string]Metrics), subs, config, multiMapFactory}
+func NewReport(
+	subs []EventSubscriber, config Config, multiMapFactory MultimapFactory, counterFactory CounterFactory,
+) Report {
+	return Report{make(map[string]Metrics), subs, config, multiMapFactory, counterFactory}
 }
 
 func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, stack []any, path ...string) {
@@ -317,7 +331,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 
 	metrics, exists := r.Metrics[key]
 	if !exists {
-		metrics = NewMetrics(key, r.multiMapFactory, r.config.ColumnConfigs[key].Constraints...)
+		metrics = NewMetrics(key, r.multiMapFactory, r.counterFactory, r.config.ColumnConfigs[key].Constraints...)
 		r.subs.PostNewField(key)
 	}
 

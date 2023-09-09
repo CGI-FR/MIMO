@@ -17,6 +17,7 @@ Types of changes
 ## [0.4.1]
 
 - `Fixed` error handling, fatal errors will not print mimo help.
+- `Fixed` all counters are now persisted (with persist option).
 
 ## [0.4.0]
 

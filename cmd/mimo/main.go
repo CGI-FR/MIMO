@@ -122,6 +122,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		realReader,
 		maskedReader,
 		selectMultimapFactory(),
+		selectCounterFactory(),
 		infra.SubscriberLogger{},
 	)
 
@@ -180,14 +181,44 @@ func selectMultimapFactory() mimo.MultimapFactory {
 	return multimapFactory
 }
 
+func selectCounterFactory() mimo.CounterFactory {
+	var counterFactory mimo.CounterFactory
+
+	if persist == "" {
+		counterFactory = func(fieldname string) mimo.CounterBackend {
+			return &mimo.InMemoryCounterBackend{
+				TotalCount:   0,
+				NilCount:     0,
+				IgnoredCount: 0,
+				MaskedCount:  0,
+			}
+		}
+	} else {
+		counterFactory = func(fieldname string) mimo.CounterBackend {
+			path := ""
+			if persist != "" {
+				path = persist + "/" + fieldname
+			}
+			factory, err := infra.PebbleCounterBackendFactory(path)
+			if err != nil {
+				log.Fatal().Err(err).Msg("End MIMO")
+			}
+
+			return factory
+		}
+	}
+
+	return counterFactory
+}
+
 func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool {
 	metrics := report.ColumnMetric(colname)
 	if metrics.Validate() >= 0 {
 		log.Info().
 			Str("field", colname).
-			Int64("count-nil", metrics.NilCount).
-			Int64("count-ignored", metrics.IgnoredCount).
-			Int64("count-masked", metrics.MaskedCount).
+			Int64("count-nil", metrics.NilCount()).
+			Int64("count-ignored", metrics.IgnoredCount()).
+			Int64("count-masked", metrics.MaskedCount()).
 			Int64("count-missed", metrics.NonMaskedCount()).
 			Float64("rate-masking", metrics.MaskedRate()).
 			Float64("rate-coherence", metrics.Coherence.Rate()).
@@ -196,9 +227,9 @@ func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool 
 	} else {
 		log.Error().
 			Str("field", colname).
-			Int64("count-nil", metrics.NilCount).
-			Int64("count-ignored", metrics.IgnoredCount).
-			Int64("count-masked", metrics.MaskedCount).
+			Int64("count-nil", metrics.NilCount()).
+			Int64("count-ignored", metrics.IgnoredCount()).
+			Int64("count-masked", metrics.MaskedCount()).
 			Int64("count-missed", metrics.NonMaskedCount()).
 			Float64("rate-masking", metrics.MaskedRate()).
 			Float64("rate-coherence", metrics.Coherence.Rate()).

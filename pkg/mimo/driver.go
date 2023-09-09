@@ -34,13 +34,14 @@ func NewDriver(
 	realReader DataRowReader,
 	maskedReader DataRowReader,
 	multimapFactory MultimapFactory,
+	counterFactory CounterFactory,
 	subs ...EventSubscriber,
 ) Driver {
 	return Driver{
 		realDataSource: realReader,
 		maskDataSource: maskedReader,
 		subscribers:    subs,
-		report:         NewReport(subs, NewConfig(), multimapFactory),
+		report:         NewReport(subs, NewConfig(), multimapFactory, counterFactory),
 	}
 }
 

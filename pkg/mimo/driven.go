@@ -41,3 +41,17 @@ type SizeIterator interface {
 	Value() int
 	Close() error
 }
+
+type CounterBackend interface {
+	IncreaseTotalCount()
+	GetTotalCount() int64
+
+	IncreaseNilCount()
+	GetNilCount() int64
+
+	IncreaseIgnoredCount()
+	GetIgnoredCount() int64
+
+	IncreaseMaskedCount()
+	GetMaskedCount() int64
+}
