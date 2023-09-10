@@ -237,7 +237,8 @@ func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool 
 			Msg("summmary for column " + colname)
 		haserror = true
 
-		logSamples("coherence", "real-value", "pseudonyms", metrics.GetInvalidSamplesForCoherentRate(10)) //nolint:gomnd
+		logSamples("coherence", "real-value", "pseudonyms", metrics.GetInvalidSamplesForCoherentRate(10))      //nolint:gomnd
+		logSamples("identifiant", "pseudonym", "real-values", metrics.GetInvalidSamplesForIdentifiantRate(10)) //nolint:gomnd
 	}
 
 	return haserror

@@ -280,6 +280,39 @@ func (m Metrics) findFailedCoherentConstraint() *Constraint {
 	return nil
 }
 
+// GetInvalidSamplesForIdentifiantRate will return at most n invalid sample if a constraint on identifiant rate failed.
+func (m Metrics) GetInvalidSamplesForIdentifiantRate(maxlen int) []Sample {
+	constraint := m.findFailedIdentifiantConstraint()
+	samples := []Sample{}
+
+	if constraint != nil {
+		if (constraint.Type == ShouldEqual && constraint.Value > m.Identifiant.Rate()) ||
+			constraint.Type == ShouldBeGreaterThan || constraint.Type == ShouldBeGreaterThanOrEqualTo {
+			samples = append(samples, m.Identifiant.Backend.GetSamplesMulti(maxlen)...)
+		}
+
+		if (constraint.Type == ShouldEqual && constraint.Value < m.Identifiant.Rate()) ||
+			constraint.Type == ShouldBeLessThanOrEqualTo || constraint.Type == ShouldBeLowerThan {
+			samples = append(samples, m.Identifiant.Backend.GetSamplesMono(maxlen)...)
+		}
+	}
+
+	return samples
+}
+
+func (m Metrics) findFailedIdentifiantConstraint() *Constraint {
+	for _, c := range m.Constraints {
+		c := c
+		if c.Target == IdentifiantRate {
+			if !validate(c.Type, c.Value, m.Identifiant.Rate()) {
+				return &c
+			}
+		}
+	}
+
+	return nil
+}
+
 type Report struct {
 	Metrics         map[string]Metrics
 	subs            Suscribers
