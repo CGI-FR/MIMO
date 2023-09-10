@@ -110,7 +110,7 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 				case "maskingRate":
 					constraint.Target = mimo.MaskingRate
 				case "coherentRate":
-					constraint.Target = mimo.CohenrentRate
+					constraint.Target = mimo.CoherentRate
 				case "identifiantRate":
 					constraint.Target = mimo.IdentifiantRate
 				default:

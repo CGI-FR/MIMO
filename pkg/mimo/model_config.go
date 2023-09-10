@@ -46,7 +46,7 @@ type ConstraintTarget int
 
 const (
 	MaskingRate ConstraintTarget = iota
-	CohenrentRate
+	CoherentRate
 	IdentifiantRate
 )
 

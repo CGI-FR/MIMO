@@ -1,0 +1,8 @@
+version: "1"
+metrics:
+  - name: "name"
+    constraints:
+      coherentRate:
+        shouldBeGreaterThan: 0
+      identifiantRate:
+        shouldBeGreaterThan: 0

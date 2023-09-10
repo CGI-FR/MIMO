@@ -16,6 +16,7 @@ Types of changes
 
 ## [0.4.1]
 
+- `Added` debug information in logs when a constraint fail.
 - `Fixed` error handling, fatal errors will not print mimo help.
 - `Fixed` all counters are now persisted (with persist option).
 
