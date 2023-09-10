@@ -14,7 +14,7 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
-## [0.4.1]
+## [0.5.0]
 
 - `Added` debug information in logs when a constraint fail.
 - `Fixed` error handling, fatal errors will not print mimo help.
