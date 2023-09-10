@@ -236,9 +236,26 @@ func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool 
 			Float64("rate-identifiable", metrics.Identifiant.Rate()).
 			Msg("summmary for column " + colname)
 		haserror = true
+
+		logSamples("coherence", "real-value", "pseudonyms", metrics.GetInvalidSamplesForCoherentRate(10)) //nolint:gomnd
 	}
 
 	return haserror
+}
+
+func logSamples(target, labelForValue, labelForAssigned string, samples []mimo.Sample) {
+	for _, sample := range samples {
+		lenMax := fmt.Sprintf("%d", len(sample.AssignedValues))
+
+		if len(sample.AssignedValues) > 10 { //nolint:gomnd
+			sample.AssignedValues = sample.AssignedValues[:10]
+		}
+
+		log.Error().
+			Str(labelForValue, sample.OriginalValue).
+			Strs(labelForAssigned, sample.AssignedValues).
+			Msg("sample value that failed " + target + " because it was attributed " + lenMax + " " + labelForAssigned)
+	}
 }
 
 func initLog() {
