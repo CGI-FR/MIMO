@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"slices"
 	"sort"
 	"strings"
 
@@ -251,6 +252,8 @@ func logSamples(target, labelForValue, labelForAssigned string, samples []mimo.S
 		if len(sample.AssignedValues) > 10 { //nolint:gomnd
 			sample.AssignedValues = sample.AssignedValues[:10]
 		}
+
+		slices.Sort(sample.AssignedValues)
 
 		log.Error().
 			Str(labelForValue, sample.OriginalValue).

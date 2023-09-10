@@ -1,0 +1,29 @@
+# Venom Test Suite definition
+# Check Venom documentation for more information : https://github.com/ovh/venom
+name: failed constraints should provide sample data in logs for debugging
+testcases:
+  - name: debug info is not present in err log if no constraint
+    steps:
+      - script: pimo --empty-input --seed 1 --repeat 100 --mask 'name=[{add:""},{randomChoice:["John","Jane"]}]' > working/real.jsonl
+      - script: pimo --empty-input --seed 2 --repeat 100 --mask 'name=[{add:""},{randomChoice:["John","Jane"]}]' > working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo -verror working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+
+      - script: mv report.html ../reports/report_debug_constraints_no.html
+
+  - name: debug info is present in err log constraint fail
+    steps:
+      - script: pimo --empty-input --seed 1 --repeat 100 --mask 'name=[{add:""},{randomChoice:["John","Jane"]}]' > working/real.jsonl
+      - script: pimo --empty-input --seed 2 --repeat 100 --mask 'name=[{add:""},{randomChoice:["John","Jane"]}]' > working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --config ../configs/config_debug_constraint.yaml -verror working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 1
+          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["\"Jane\"","\"John\""] real-value="\"John\"_"
+          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["\"Jane\"","\"John\""] real-value="\"Jane\"_"
+          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym="\"John\"" real-values=["\"Jane\"","\"John\""]
+          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym="\"Jane\"" real-values=["\"Jane\"","\"John\""]
+
+      - script: mv report.html ../reports/report_debug_constraints_yes.html
