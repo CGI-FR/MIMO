@@ -188,7 +188,7 @@ func (m Metrics) CoherenceRateValidate() int {
 	result := 0
 
 	for _, constraint := range m.Constraints {
-		if constraint.Target == CohenrentRate {
+		if constraint.Target == CoherentRate {
 			if !validate(constraint.Type, constraint.Value, m.Coherence.Rate()) {
 				return -1
 			}
