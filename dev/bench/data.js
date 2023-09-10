@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1694282690837,
+  "lastUpdate": 1694375017491,
   "repoUrl": "https://github.com/CGI-FR/MIMO",
   "entries": {
     "Benchmark": [
@@ -420,6 +420,66 @@ window.BENCHMARK_DATA = {
             "value": 2,
             "unit": "allocs/op",
             "extra": "116823874 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44274230+adrienaury@users.noreply.github.com",
+            "name": "Adrien Aury",
+            "username": "adrienaury"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9379b8ab5dbb953d439d3ee6ad973143877b7db9",
+          "message": "feat: debug information when constraint fail (#29)\n\n* style: fix typo\r\n\r\n* feat: wip! debug info\r\n\r\n* feat: wip! debug info\r\n\r\n* feat: debug info\r\n\r\n* test: debug info when constraint fail\r\n\r\n* chore: add pimo in ci",
+          "timestamp": "2023-09-10T21:40:29+02:00",
+          "tree_id": "0d0379856e52e98c249cdeff6b83ca93a26dca98",
+          "url": "https://github.com/CGI-FR/MIMO/commit/9379b8ab5dbb953d439d3ee6ad973143877b7db9"
+        },
+        "date": 1694375017154,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkInMemory - ns/op",
+            "value": 104,
+            "unit": "ns/op",
+            "extra": "135476896 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "135476896 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "135476896 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - ns/op",
+            "value": 92.9,
+            "unit": "ns/op",
+            "extra": "119032645 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - B/op",
+            "value": 16,
+            "unit": "B/op",
+            "extra": "119032645 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - allocs/op",
+            "value": 2,
+            "unit": "allocs/op",
+            "extra": "119032645 times\n2 procs"
           }
         ]
       }
