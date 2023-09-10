@@ -32,6 +32,8 @@ type MultimapBackend interface {
 	SetKey(key string, value map[string]int) error
 	GetSize(key string) int
 	NewSizeIterator() SizeIterator
+	GetSamplesMono(n int) []Sample
+	GetSamplesMulti(n int) []Sample
 }
 
 type SizeIterator interface {

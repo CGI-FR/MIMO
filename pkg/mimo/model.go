@@ -247,6 +247,39 @@ func (m Metrics) Validate() int {
 	return 0
 }
 
+// GetInvalidSamplesForCoherentRate will return at most n invalid sample if a constraint on coherent rate failed.
+func (m Metrics) GetInvalidSamplesForCoherentRate(maxlen int) []Sample {
+	constraint := m.findFailedCoherentConstraint()
+	samples := []Sample{}
+
+	if constraint != nil {
+		if (constraint.Type == ShouldEqual && constraint.Value > m.Coherence.Rate()) ||
+			constraint.Type == ShouldBeGreaterThan || constraint.Type == ShouldBeGreaterThanOrEqualTo {
+			samples = append(samples, m.Coherence.Backend.GetSamplesMulti(maxlen)...)
+		}
+
+		if (constraint.Type == ShouldEqual && constraint.Value < m.Coherence.Rate()) ||
+			constraint.Type == ShouldBeLessThanOrEqualTo || constraint.Type == ShouldBeLowerThan {
+			samples = append(samples, m.Coherence.Backend.GetSamplesMono(maxlen)...)
+		}
+	}
+
+	return samples
+}
+
+func (m Metrics) findFailedCoherentConstraint() *Constraint {
+	for _, c := range m.Constraints {
+		c := c
+		if c.Target == CoherentRate {
+			if !validate(c.Type, c.Value, m.Coherence.Rate()) {
+				return &c
+			}
+		}
+	}
+
+	return nil
+}
+
 type Report struct {
 	Metrics         map[string]Metrics
 	subs            Suscribers
@@ -450,4 +483,9 @@ func isExcluded(exclude []any, value any, valueStr string) bool {
 	}
 
 	return false
+}
+
+type Sample struct {
+	OriginalValue  string
+	AssignedValues []string
 }

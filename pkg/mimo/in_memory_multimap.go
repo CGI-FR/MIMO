@@ -43,6 +43,56 @@ func (m InMemoryMultimapBackend) GetSize(key string) int {
 	return len(m[key])
 }
 
+func (m InMemoryMultimapBackend) GetSamplesMulti(maxlen int) []Sample {
+	samples := []Sample{}
+
+	for value, array := range m {
+		if len(array) > 1 {
+			assignedValues := []string{}
+
+			for assignedValue := range array {
+				assignedValues = append(assignedValues, assignedValue)
+			}
+
+			samples = append(samples, Sample{
+				OriginalValue:  value,
+				AssignedValues: assignedValues,
+			})
+		}
+
+		if len(samples) == maxlen {
+			break
+		}
+	}
+
+	return samples
+}
+
+func (m InMemoryMultimapBackend) GetSamplesMono(maxlen int) []Sample {
+	samples := []Sample{}
+
+	for value, array := range m {
+		if len(array) == 1 {
+			assignedValues := []string{}
+
+			for assignedValue := range array {
+				assignedValues = append(assignedValues, assignedValue)
+			}
+
+			samples = append(samples, Sample{
+				OriginalValue:  value,
+				AssignedValues: assignedValues,
+			})
+		}
+
+		if len(samples) == maxlen {
+			break
+		}
+	}
+
+	return samples
+}
+
 // CountMin returns the minimum count of values associated to a key across the map.
 func (m InMemoryMultimapBackend) NewSizeIterator() SizeIterator { //nolint: ireturn
 	sizes := []int{}

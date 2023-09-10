@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/rs/zerolog/log"
@@ -151,6 +152,70 @@ func (b PebbleMultimapBackend) GetSize(key string) int {
 	}
 
 	return int(count)
+}
+
+func (b PebbleMultimapBackend) GetSamplesMulti(maxlen int) []mimo.Sample {
+	samples := []mimo.Sample{}
+
+	iter, _ := b.db.NewIter(b.prefixIterOptions([]byte(KeyPrefix)))
+
+	for valid := iter.First(); valid; valid = iter.Next() {
+		key := strings.TrimPrefix(string(iter.Key()), KeyPrefix)
+		array := map[string]int{}
+
+		_ = json.Unmarshal(iter.Value(), &array)
+
+		if len(array) > 1 {
+			assignedValues := []string{}
+
+			for assignedValue := range array {
+				assignedValues = append(assignedValues, assignedValue)
+			}
+
+			samples = append(samples, mimo.Sample{
+				OriginalValue:  key,
+				AssignedValues: assignedValues,
+			})
+		}
+
+		if len(samples) == maxlen {
+			break
+		}
+	}
+
+	return samples
+}
+
+func (b PebbleMultimapBackend) GetSamplesMono(maxlen int) []mimo.Sample {
+	samples := []mimo.Sample{}
+
+	iter, _ := b.db.NewIter(b.prefixIterOptions([]byte(KeyPrefix)))
+
+	for valid := iter.First(); valid; valid = iter.Next() {
+		key := strings.TrimPrefix(string(iter.Key()), KeyPrefix)
+		array := map[string]int{}
+
+		_ = json.Unmarshal(iter.Value(), &array)
+
+		if len(array) == 1 {
+			assignedValues := []string{}
+
+			for assignedValue := range array {
+				assignedValues = append(assignedValues, assignedValue)
+			}
+
+			samples = append(samples, mimo.Sample{
+				OriginalValue:  key,
+				AssignedValues: assignedValues,
+			})
+		}
+
+		if len(samples) == maxlen {
+			break
+		}
+	}
+
+	return samples
 }
 
 func (b PebbleMultimapBackend) NewSizeIterator() mimo.SizeIterator { //nolint: ireturn
