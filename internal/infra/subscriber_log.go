@@ -17,9 +17,21 @@
 
 package infra
 
-import "github.com/rs/zerolog/log"
+import (
+	"slices"
 
-type SubscriberLogger struct{}
+	"github.com/rs/zerolog/log"
+)
+
+type SubscriberLogger struct {
+	watch []string
+}
+
+func NewSubscriberLogger(watch ...string) SubscriberLogger {
+	return SubscriberLogger{
+		watch: watch,
+	}
+}
 
 func (sl SubscriberLogger) NewField(fieldname string) {
 	log.Info().Str("name", fieldname).Msg("new field")
@@ -27,4 +39,30 @@ func (sl SubscriberLogger) NewField(fieldname string) {
 
 func (sl SubscriberLogger) FirstNonMaskedValue(fieldname string, _ any) {
 	log.Info().Str("name", fieldname).Msg("unmasked value detected")
+}
+
+func (sl SubscriberLogger) NonMaskedValue(fieldname string, value any) {
+	if slices.Contains(sl.watch, fieldname) {
+		log.Error().Str("name", fieldname).Interface("value", value).Msg("unmasked value")
+	}
+}
+
+func (sl SubscriberLogger) IncoherentValue(fieldname string, value any, pseudonym any) {
+	if slices.Contains(sl.watch, fieldname) {
+		log.Error().
+			Str("name", fieldname).
+			Interface("value", value).
+			Interface("pseudonym", pseudonym).
+			Msg("incoherent masking lowering coherent rate")
+	}
+}
+
+func (sl SubscriberLogger) InconsistentPseudonym(fieldname string, value any, pseudonym any) {
+	if slices.Contains(sl.watch, fieldname) {
+		log.Error().
+			Str("name", fieldname).
+			Interface("value", value).
+			Interface("pseudonym", pseudonym).
+			Msg("inconsistent pseudonym lowering identifiant rate")
+	}
 }

@@ -52,7 +52,7 @@ func BenchmarkInMemory(b *testing.B) {
 				MaskedCount:  0,
 			}
 		},
-		infra.SubscriberLogger{},
+		infra.NewSubscriberLogger(),
 	)
 
 	defer driver.Close()
@@ -96,7 +96,7 @@ func BenchmarkOnDisk(b *testing.B) {
 
 			return factory
 		},
-		infra.SubscriberLogger{},
+		infra.NewSubscriberLogger(),
 	)
 
 	defer driver.Close()
