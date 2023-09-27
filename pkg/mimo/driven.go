@@ -24,6 +24,9 @@ type DataRowReader interface {
 type EventSubscriber interface {
 	NewField(fieldname string)
 	FirstNonMaskedValue(fieldname string, value any)
+	NonMaskedValue(fieldname string, value any)
+	IncoherentValue(fieldname string, value any, pseudonym any)
+	InconsistentPseudonym(fieldname string, value any, pseudonym any)
 }
 
 type MultimapBackend interface {

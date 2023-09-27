@@ -38,6 +38,12 @@ func (subs Suscribers) PostNewField(fieldname string) {
 	}
 }
 
+func (subs Suscribers) PostNonMaskedValue(fieldname string, value any) {
+	for _, sub := range subs {
+		sub.NonMaskedValue(fieldname, value)
+	}
+}
+
 func (subs Suscribers) PostFirstNonMaskedValue(fieldname string, value any) {
 	for _, sub := range subs {
 		sub.FirstNonMaskedValue(fieldname, value)
@@ -112,8 +118,11 @@ func (m *Metrics) Update(
 	if realValueOk && maskedValueOk {
 		if realValueStr != maskedValueStr {
 			m.backend.IncreaseMaskedCount()
-		} else if m.backend.GetMaskedCount() == nonBlankCount {
-			subs.PostFirstNonMaskedValue(fieldname, realValue)
+		} else {
+			subs.PostNonMaskedValue(fieldname, realValue)
+			if m.backend.GetMaskedCount() == nonBlankCount {
+				subs.PostFirstNonMaskedValue(fieldname, realValue)
+			}
 		}
 	}
 

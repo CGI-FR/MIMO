@@ -47,6 +47,7 @@ var (
 	colormode string
 
 	configfile  string
+	watchFields []string
 	diskStorage bool
 	persist     string
 )
@@ -92,6 +93,7 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().BoolVar(&jsonlog, "log-json", false, "output logs in JSON format")
 	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "use colors in log outputs : yes, no or auto")
 	rootCmd.PersistentFlags().StringVar(&configfile, "config", "", "name of the YAML configuration file to use")
+	rootCmd.PersistentFlags().StringSliceVarP(&watchFields, "watch", "w", []string{}, "watch specified fields")
 
 	rootCmd.PersistentFlags().BoolVar(&diskStorage, "disk-storage", false, "enable data storage on disk")
 	rootCmd.PersistentFlags().StringVar(&persist, "persist", "",
@@ -124,7 +126,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		maskedReader,
 		selectMultimapFactory(),
 		selectCounterFactory(),
-		infra.SubscriberLogger{},
+		infra.NewSubscriberLogger(watchFields...),
 	)
 
 	defer driver.Close()

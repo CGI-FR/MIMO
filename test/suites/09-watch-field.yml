@@ -1,0 +1,21 @@
+# Venom Test Suite definition
+# Check Venom documentation for more information : https://github.com/ovh/venom
+name: tests for the watch flag
+testcases:
+  - name: watch a single field
+    steps:
+      - script: echo '{"value":"A","other":"value"}' > working/real.jsonl
+      - script: echo '{"value":"unmasked","other":"value"}' >> working/real.jsonl
+      - script: echo '{"value":"B","other":"value"}' >> working/real.jsonl
+
+      - script: echo '{"value":"C","other":"value"}' > working/masked.jsonl
+      - script: echo '{"value":"unmasked","other":"value"}' >> working/masked.jsonl
+      - script: echo '{"value":"D","other":"value"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --watch value -vwarn working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring WRN unmasked value name=value value=unmasked
+          - result.systemerr ShouldNotContainSubstring WRN unmasked value name=other value=value
+
+      - script: mv report.html ../reports/report_watch_single.html

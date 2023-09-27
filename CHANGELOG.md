@@ -14,6 +14,10 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.6.0]
+
+- `Added` log unmasked values with the `watch` flag.
+
 ## [0.5.0]
 
 - `Added` debug information in logs when a constraint fail.
