@@ -43,13 +43,13 @@ func (sl SubscriberLogger) FirstNonMaskedValue(fieldname string, _ any) {
 
 func (sl SubscriberLogger) NonMaskedValue(fieldname string, value any) {
 	if slices.Contains(sl.watch, fieldname) {
-		log.Error().Str("name", fieldname).Interface("value", value).Msg("unmasked value")
+		log.Warn().Str("name", fieldname).Interface("value", value).Msg("unmasked value")
 	}
 }
 
 func (sl SubscriberLogger) IncoherentValue(fieldname string, value any, pseudonym any) {
 	if slices.Contains(sl.watch, fieldname) {
-		log.Error().
+		log.Warn().
 			Str("name", fieldname).
 			Interface("value", value).
 			Interface("pseudonym", pseudonym).
@@ -59,7 +59,7 @@ func (sl SubscriberLogger) IncoherentValue(fieldname string, value any, pseudony
 
 func (sl SubscriberLogger) InconsistentPseudonym(fieldname string, value any, pseudonym any) {
 	if slices.Contains(sl.watch, fieldname) {
-		log.Error().
+		log.Warn().
 			Str("name", fieldname).
 			Interface("value", value).
 			Interface("pseudonym", pseudonym).
