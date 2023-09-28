@@ -29,7 +29,7 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-func generateCoherentSource(tmplstring string, root DataRow, stack []any) (string, error) {
+func applyTemplate(tmplstring string, root DataRow, stack []any) (string, error) {
 	funcmap := generateFuncMap()
 
 	funcmap["Stack"] = generateStackFunc(stack)
