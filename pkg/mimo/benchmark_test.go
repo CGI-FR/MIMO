@@ -107,3 +107,69 @@ func BenchmarkOnDisk(b *testing.B) {
 		}
 	}
 }
+
+//nolint:funlen
+func BenchmarkAllOptions(b *testing.B) {
+	zerolog.SetGlobalLevel(zerolog.WarnLevel)
+
+	realReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/single-100-1.jsonl")
+	if err != nil {
+		b.FailNow()
+	}
+
+	maskedReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/single-100-2.jsonl")
+	if err != nil {
+		b.FailNow()
+	}
+
+	driver := mimo.NewDriver(
+		realReader,
+		maskedReader,
+		func(fieldname string) mimo.Multimap {
+			return mimo.Multimap{Backend: mimo.InMemoryMultimapBackend{}}
+		},
+		func(fieldname string) mimo.CounterBackend {
+			return &mimo.InMemoryCounterBackend{
+				TotalCount:   0,
+				NilCount:     0,
+				IgnoredCount: 0,
+				MaskedCount:  0,
+			}
+		},
+		infra.NewSubscriberLogger(),
+	)
+
+	defer driver.Close()
+
+	driver.Configure(mimo.Config{
+		ColumnNames: []string{"value"},
+		ColumnConfigs: map[string]mimo.ColumnConfig{
+			"value": {
+				Exclude:         []any{"Odile", "Tiffany"},
+				ExcludeTemplate: `{{uuidv4 | contains "a"}}`,
+				CoherentWith:    []string{"name", "surname"},
+				CoherentSource:  "{{.name | NoAccent | title}} {{.surname | NoAccent | upper}}",
+				Constraints: []mimo.Constraint{
+					{
+						Target: mimo.MaskingRate,
+						Type:   mimo.ShouldBeGreaterThan,
+						Value:  .9,
+					},
+				},
+				Alias: "",
+			},
+		},
+		PreprocessConfigs: []mimo.PreprocessConfig{
+			{
+				Path:  "email",
+				Value: "{{.name | NoAccent | lower}}.{{.surname | NoAccent | lower}}@{{uuidv4}}.com",
+			},
+		},
+	})
+
+	for n := 0; n < b.N; n++ {
+		if _, err := driver.Analyze(); err != nil {
+			b.FailNow()
+		}
+	}
+}
