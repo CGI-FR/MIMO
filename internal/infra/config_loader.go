@@ -38,12 +38,13 @@ type YAMLStructure struct {
 
 // YAMLColumn defines how to store a column config in YAML format.
 type YAMLColumn struct {
-	Name           string                    `yaml:"name"`
-	Exclude        []any                     `yaml:"exclude,omitempty"`
-	CoherentWith   []string                  `yaml:"coherentWith,omitempty"`
-	CoherentSource string                    `yaml:"coherentSource,omitempty"`
-	Constraints    map[string]YAMLConstraint `yaml:"constraints,omitempty"`
-	Alias          string                    `yaml:"alias,omitempty"`
+	Name            string                    `yaml:"name"`
+	Exclude         []any                     `yaml:"exclude,omitempty"`
+	ExcludeTemplate string                    `yaml:"excludeTemplate,omitempty"`
+	CoherentWith    []string                  `yaml:"coherentWith,omitempty"`
+	CoherentSource  string                    `yaml:"coherentSource,omitempty"`
+	Constraints     map[string]YAMLConstraint `yaml:"constraints,omitempty"`
+	Alias           string                    `yaml:"alias,omitempty"`
 }
 
 type YAMLPreprocess struct {
@@ -91,11 +92,12 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 
 	for _, yamlcolumn := range yamlconfig.Columns {
 		column := mimo.ColumnConfig{
-			Exclude:        yamlcolumn.Exclude,
-			CoherentWith:   yamlcolumn.CoherentWith,
-			CoherentSource: yamlcolumn.CoherentSource,
-			Constraints:    []mimo.Constraint{},
-			Alias:          yamlcolumn.Alias,
+			Exclude:         yamlcolumn.Exclude,
+			ExcludeTemplate: yamlcolumn.ExcludeTemplate,
+			CoherentWith:    yamlcolumn.CoherentWith,
+			CoherentSource:  yamlcolumn.CoherentSource,
+			Constraints:     []mimo.Constraint{},
+			Alias:           yamlcolumn.Alias,
 		}
 
 		for target, yamlconstraint := range yamlcolumn.Constraints {

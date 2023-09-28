@@ -17,6 +17,7 @@ Types of changes
 ## [0.6.0]
 
 - `Added` log unmasked values with the `watch` flag.
+- `Added` new config parameter `excludeTemplate` to exclude a value with a template expression.
 - `Fixed` exclusion with coherent source specified.
 
 ## [0.5.0]

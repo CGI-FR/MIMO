@@ -83,18 +83,16 @@ func (m *Metrics) Update(
 	subs Suscribers,
 	config ColumnConfig,
 ) bool {
-	nonBlankCount := m.NonBlankCount()
-
 	realValueStr, realValueOk := toString(realValue)
 	maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if !realValueOk || !maskedValueOk {
-		return false // special case (arrays, objects) are not covered right now
+		return false
 	}
 
 	m.backend.IncreaseTotalCount()
 
-	excluded := isExcluded(config.Exclude, realValue, realValueStr)
+	excluded := config.excluded || isExcluded(config.Exclude, realValue, realValueStr)
 
 	if !excluded {
 		// coherence and identifiant rates are computed over all values by default (including nil values)
@@ -126,14 +124,19 @@ func (m *Metrics) Update(
 		if realValueStr != maskedValueStr {
 			m.backend.IncreaseMaskedCount()
 		} else {
-			subs.PostNonMaskedValue(fieldname, realValue)
-			if m.backend.GetMaskedCount() == nonBlankCount {
-				subs.PostFirstNonMaskedValue(fieldname, realValue)
-			}
+			m.postNonMaskedValue(subs, fieldname, realValue)
 		}
 	}
 
 	return true
+}
+
+func (m *Metrics) postNonMaskedValue(subs Suscribers, fieldname string, realValue any) {
+	if m.backend.GetMaskedCount() == m.NonBlankCount()-1 {
+		subs.PostFirstNonMaskedValue(fieldname, realValue)
+	}
+
+	subs.PostNonMaskedValue(fieldname, realValue)
 }
 
 func (m Metrics) NilCount() int64 {
@@ -420,6 +423,16 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 	coherenceValues := computeCoherenceValues(config, root, stack)
 	if len(coherenceValues) == 0 {
 		coherenceValues = []any{realValue}
+	}
+
+	if len(config.ExcludeTemplate) > 0 {
+		result, err := generateCoherentSource(config.ExcludeTemplate, root, stack)
+
+		log.Err(err).Str("result", result).Msg("compute exclusion from template")
+
+		if exclude, err := strconv.ParseBool(result); exclude && err == nil {
+			config.excluded = true
+		}
 	}
 
 	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
