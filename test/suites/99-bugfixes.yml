@@ -54,6 +54,6 @@ testcases:
       - script: cat working/masked.jsonl | mimo --config ../configs/config_exclude_coherent_source.yaml -v3 working/real.jsonl
         assertions:
           - result.code ShouldEqual 0
-          - result.systemerr ShouldContainSubstring value count-ignored=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=1 rate-masking=1
+          - result.systemerr ShouldContainSubstring value count-ignored=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=0.5 rate-masking=1
 
       - script: mv report.html ../reports/report_bugfix_exclude_coherent_source.html

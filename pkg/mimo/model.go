@@ -94,10 +94,17 @@ func (m *Metrics) Update(
 
 	m.backend.IncreaseTotalCount()
 
-	m.Coherence.Add(toStringSlice(coherenceValue), maskedValueStr)
-	m.Identifiant.Add(maskedValueStr, realValueStr)
+	excluded := isExcluded(config.Exclude, realValue, realValueStr)
+
+	if !excluded {
+		// coherence and identifiant rates are computed over all values by default (including nil values)
+		// that's the reason why this code block is located here
+		m.Coherence.Add(toStringSlice(coherenceValue), maskedValueStr)
+		m.Identifiant.Add(maskedValueStr, realValueStr)
+	}
 
 	log.Trace().
+		Str("name", fieldname).
 		Str("masked", maskedValueStr).
 		Str("real", realValueStr).
 		Str("coherence", toStringSlice(coherenceValue)).
@@ -109,7 +116,7 @@ func (m *Metrics) Update(
 		return true
 	}
 
-	if isExcluded(config.Exclude, realValue, realValueStr) {
+	if excluded {
 		m.backend.IncreaseIgnoredCount()
 
 		return true
