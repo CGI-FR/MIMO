@@ -38,3 +38,22 @@ testcases:
           - result.systemerr ShouldContainSubstring value count-ignored=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=1 rate-masking=1
 
       - script: mv report.html ../reports/report_bugfix_exclude_numeric.html
+
+  - name: exclude value with different coherence source
+    steps:
+      - script: echo '{"value":"1","source":"A"}' > working/real.jsonl
+      - script: echo '{"value":"2","source":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"","source":"A"}' >> working/real.jsonl
+      - script: echo '{"value":"3","source":"B"}' >> working/real.jsonl
+
+      - script: echo '{"value":"X","source":"A"}' > working/masked.jsonl
+      - script: echo '{"value":"X","source":"A"}' >> working/masked.jsonl
+      - script: echo '{"value":"","source":"A"}' >> working/masked.jsonl
+      - script: echo '{"value":"Y","source":"B"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --config ../configs/config_exclude_coherent_source.yaml -v3 working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+          - result.systemerr ShouldContainSubstring value count-ignored=1 count-masked=3 count-missed=0 count-nil=0 field=value rate-coherence=1 rate-identifiable=1 rate-masking=1
+
+      - script: mv report.html ../reports/report_bugfix_exclude_coherent_source.html
