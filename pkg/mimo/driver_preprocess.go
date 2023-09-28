@@ -36,11 +36,11 @@ func preprocessValue(value any, paths []string, stack []any, templstr string, ro
 
 	if len(paths) == 1 {
 		if obj, ok := value.(map[string]any); ok {
-			obj[path], err = generateCoherentSource(templstr, root, append(stack, obj))
+			obj[path], err = applyTemplate(templstr, root, append(stack, obj))
 		}
 
 		if obj, ok := value.(DataRow); ok {
-			obj[path], err = generateCoherentSource(templstr, root, append(stack, obj))
+			obj[path], err = applyTemplate(templstr, root, append(stack, obj))
 		}
 
 		if err != nil {
