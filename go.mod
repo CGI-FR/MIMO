@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/cockroachdb/pebble v0.0.0-20230819001538-1798fbf5956c
+	github.com/goccy/go-json v0.10.2
 	github.com/mattn/go-isatty v0.0.14
 	github.com/ohler55/ojg v1.19.2
 	github.com/rs/zerolog v1.28.0

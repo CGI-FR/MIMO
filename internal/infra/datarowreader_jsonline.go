@@ -19,11 +19,12 @@ package infra
 
 import (
 	"bufio"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/goccy/go-json"
 
 	"github.com/cgi-fr/mimo/pkg/mimo"
 )
@@ -55,7 +56,7 @@ func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
 		}
 
 		data = mimo.DataRow{}
-		if err := json.Unmarshal(drr.input.Bytes(), &data); err != nil {
+		if err := json.UnmarshalNoEscape(drr.input.Bytes(), &data); err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
 	}
