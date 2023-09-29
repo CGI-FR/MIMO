@@ -139,20 +139,10 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	haserror := false
 
-	var cpuProfiler interface{ Stop() }
-
-	if profiling {
-		cpuProfiler = profile.Start(profile.ProfilePath("."))
-	}
-
 	var report mimo.Report
 
-	if report, err = driver.Analyze(); err != nil {
+	if report, err = runAnalyse(driver, profiling); err != nil {
 		return fmt.Errorf("%w", err)
-	}
-
-	if profiling {
-		cpuProfiler.Stop()
 	}
 
 	columns := report.Columns()
@@ -160,6 +150,11 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	for _, colname := range columns {
 		haserror = appendColumnMetric(report, colname, haserror)
+	}
+
+	reportPath = strings.TrimSpace(reportPath)
+	if strings.HasSuffix(reportPath, string(os.PathSeparator)) {
+		reportPath += "report.html"
 	}
 
 	if err = infra.NewReportExporter().Export(report, reportPath); err != nil {
@@ -171,6 +166,27 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	}
 
 	return nil
+}
+
+func runAnalyse(driver mimo.Driver, profiling bool) (mimo.Report, error) {
+	var cpuProfiler interface{ Stop() }
+
+	if profiling {
+		cpuProfiler = profile.Start(profile.ProfilePath("."))
+	}
+
+	var report mimo.Report
+
+	report, err := driver.Analyze()
+	if err != nil {
+		return report, fmt.Errorf("%w", err)
+	}
+
+	if profiling {
+		cpuProfiler.Stop()
+	}
+
+	return report, nil
 }
 
 func selectMultimapFactory() mimo.MultimapFactory {

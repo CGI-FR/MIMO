@@ -1,0 +1,23 @@
+name: validate metrics
+testcases:
+  - name: full name report
+    steps:
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --output ../reports/report_output_full.html -v3 working/real.jsonl
+      - script: test -f ../reports/report_output_full.html
+
+  - name: only directory report
+    steps:
+      - script: echo '{"value":"A"}' > working/real.jsonl
+      - script: echo '{"value":"A"}' >> working/real.jsonl
+
+      - script: echo '{"value":"X"}' > working/masked.jsonl
+      - script: echo '{"value":"Y"}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --output ../reports/ -v3 working/real.jsonl
+      - script: test -f ../reports/report.html
