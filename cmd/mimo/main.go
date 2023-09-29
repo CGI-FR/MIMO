@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"slices"
 	"sort"
@@ -33,6 +34,8 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
+
+const defaultPerm = 0o600 // user can read/write, everyone else can't do anything
 
 //nolint:gochecknoglobals
 var (
@@ -155,6 +158,10 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	reportPath = strings.TrimSpace(reportPath)
 	if strings.HasSuffix(reportPath, string(os.PathSeparator)) {
 		reportPath += "report.html"
+	}
+
+	if err := os.MkdirAll(path.Base(reportPath), defaultPerm); err != nil {
+		return fmt.Errorf("%w", err)
 	}
 
 	if err = infra.NewReportExporter().Export(report, reportPath); err != nil {
