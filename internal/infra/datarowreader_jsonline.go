@@ -44,7 +44,7 @@ func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, 
 }
 
 func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderJSONLine {
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(input), output: bufio.NewWriter(output)}
+	return &DataRowReaderJSONLine{input: bufio.NewScanner(input), output: output}
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
