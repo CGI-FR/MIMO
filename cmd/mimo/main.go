@@ -160,7 +160,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		reportPath += "report.html"
 	}
 
-	if err := os.MkdirAll(path.Base(reportPath), defaultPerm); err != nil {
+	if err := os.MkdirAll(path.Dir(reportPath), defaultPerm); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
