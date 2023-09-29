@@ -93,6 +93,6 @@ func (drr *DataRowReaderJSONLine) ReadDataRowAndWrite() (mimo.DataRow, error) {
 	return data, nil
 }
 
-func (drr *DataRowReaderJSONLine) Close() error {
+func (drr *DataRowReaderJSONLine) Flush() error {
 	return fmt.Errorf("%w", drr.output.Flush())
 }

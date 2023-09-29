@@ -20,7 +20,7 @@ package mimo
 type DataRowReader interface {
 	ReadDataRow() (DataRow, error)
 	ReadDataRowAndWrite() (DataRow, error)
-	Close() error
+	Flush() error
 }
 
 type EventSubscriber interface {
