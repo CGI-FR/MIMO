@@ -14,6 +14,12 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.7.0]
+
+- `Added` improvements for global performance (2 to 3 times faster).
+- `Added` new flag `--output` or `-o` to customize the filename and path of the HTML report.
+- `Added` new flag `--profile` to create a CPU profiling dumpfile.
+
 ## [0.6.0]
 
 - `Added` log unmasked values with the `watch` flag.

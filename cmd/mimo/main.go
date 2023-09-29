@@ -20,6 +20,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path"
 	"runtime"
 	"slices"
 	"sort"
@@ -28,10 +29,13 @@ import (
 	"github.com/cgi-fr/mimo/internal/infra"
 	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/mattn/go-isatty"
+	"github.com/pkg/profile"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 )
+
+const defaultPerm = 0o600 // user can read/write, everyone else can't do anything
 
 //nolint:gochecknoglobals
 var (
@@ -46,10 +50,12 @@ var (
 	debug     bool
 	colormode string
 
+	profiling   bool
 	configfile  string
 	watchFields []string
 	diskStorage bool
 	persist     string
+	reportPath  string
 )
 
 func main() {
@@ -92,12 +98,13 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "add debug information to logs (very slow)")
 	rootCmd.PersistentFlags().BoolVar(&jsonlog, "log-json", false, "output logs in JSON format")
 	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "use colors in log outputs : yes, no or auto")
-	rootCmd.PersistentFlags().StringVar(&configfile, "config", "", "name of the YAML configuration file to use")
+	rootCmd.PersistentFlags().StringVarP(&configfile, "config", "c", "", "name of the YAML configuration file to use")
 	rootCmd.PersistentFlags().StringSliceVarP(&watchFields, "watch", "w", []string{}, "watch specified fields")
-
+	rootCmd.PersistentFlags().BoolVar(&profiling, "profiling", false, "enable cpu profiling and generate a cpu.pprof file")
 	rootCmd.PersistentFlags().BoolVar(&diskStorage, "disk-storage", false, "enable data storage on disk")
 	rootCmd.PersistentFlags().StringVar(&persist, "persist", "",
 		"persist data in the specified directory (implies --disk-storage)")
+	rootCmd.PersistentFlags().StringVarP(&reportPath, "output", "o", "report.html", "output path for the HTML report")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Err(err).Msg("error when executing command")
@@ -137,7 +144,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	var report mimo.Report
 
-	if report, err = driver.Analyze(); err != nil {
+	if report, err = runAnalyse(driver, profiling); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
@@ -148,7 +155,16 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		haserror = appendColumnMetric(report, colname, haserror)
 	}
 
-	if err = infra.NewReportExporter().Export(report, "report.html"); err != nil {
+	reportPath = strings.TrimSpace(reportPath)
+	if strings.HasSuffix(reportPath, string(os.PathSeparator)) {
+		reportPath += "report.html"
+	}
+
+	if err := os.MkdirAll(path.Dir(reportPath), defaultPerm); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if err = infra.NewReportExporter().Export(report, reportPath); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
@@ -157,6 +173,27 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	}
 
 	return nil
+}
+
+func runAnalyse(driver mimo.Driver, profiling bool) (mimo.Report, error) {
+	var cpuProfiler interface{ Stop() }
+
+	if profiling {
+		cpuProfiler = profile.Start(profile.ProfilePath("."))
+	}
+
+	var report mimo.Report
+
+	report, err := driver.Analyze()
+	if err != nil {
+		return report, fmt.Errorf("%w", err)
+	}
+
+	if profiling {
+		cpuProfiler.Stop()
+	}
+
+	return report, nil
 }
 
 func selectMultimapFactory() mimo.MultimapFactory {

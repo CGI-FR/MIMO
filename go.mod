@@ -5,11 +5,13 @@ go 1.21
 require (
 	github.com/Masterminds/sprig/v3 v3.2.3
 	github.com/cockroachdb/pebble v0.0.0-20230819001538-1798fbf5956c
+	github.com/goccy/go-json v0.10.2
 	github.com/mattn/go-isatty v0.0.14
 	github.com/ohler55/ojg v1.19.2
+	github.com/pkg/profile v1.7.0
 	github.com/rs/zerolog v1.28.0
 	github.com/spf13/cobra v1.7.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	golang.org/x/text v0.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -26,9 +28,11 @@ require (
 	github.com/cockroachdb/sentry-go v0.6.1-cockroachdb.2 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/pprof v0.0.0-20211214055906-6f57359322fd // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.11 // indirect
