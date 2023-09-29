@@ -28,6 +28,7 @@ import (
 	"github.com/cgi-fr/mimo/internal/infra"
 	"github.com/cgi-fr/mimo/pkg/mimo"
 	"github.com/mattn/go-isatty"
+	"github.com/pkg/profile"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -46,10 +47,12 @@ var (
 	debug     bool
 	colormode string
 
+	profiling   bool
 	configfile  string
 	watchFields []string
 	diskStorage bool
 	persist     string
+	reportPath  string
 )
 
 func main() {
@@ -92,12 +95,13 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "add debug information to logs (very slow)")
 	rootCmd.PersistentFlags().BoolVar(&jsonlog, "log-json", false, "output logs in JSON format")
 	rootCmd.PersistentFlags().StringVar(&colormode, "color", "auto", "use colors in log outputs : yes, no or auto")
-	rootCmd.PersistentFlags().StringVar(&configfile, "config", "", "name of the YAML configuration file to use")
+	rootCmd.PersistentFlags().StringVarP(&configfile, "config", "c", "", "name of the YAML configuration file to use")
 	rootCmd.PersistentFlags().StringSliceVarP(&watchFields, "watch", "w", []string{}, "watch specified fields")
-
+	rootCmd.PersistentFlags().BoolVar(&profiling, "profiling", false, "enable cpu profiling and generate a cpu.pprof file")
 	rootCmd.PersistentFlags().BoolVar(&diskStorage, "disk-storage", false, "enable data storage on disk")
 	rootCmd.PersistentFlags().StringVar(&persist, "persist", "",
 		"persist data in the specified directory (implies --disk-storage)")
+	rootCmd.PersistentFlags().StringVarP(&reportPath, "output", "o", "report.html", "output path for the HTML report")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Err(err).Msg("error when executing command")
@@ -135,10 +139,20 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	haserror := false
 
+	var cpuProfiler interface{ Stop() }
+
+	if profiling {
+		cpuProfiler = profile.Start(profile.ProfilePath("."))
+	}
+
 	var report mimo.Report
 
 	if report, err = driver.Analyze(); err != nil {
 		return fmt.Errorf("%w", err)
+	}
+
+	if profiling {
+		cpuProfiler.Stop()
 	}
 
 	columns := report.Columns()
@@ -148,7 +162,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		haserror = appendColumnMetric(report, colname, haserror)
 	}
 
-	if err = infra.NewReportExporter().Export(report, "report.html"); err != nil {
+	if err = infra.NewReportExporter().Export(report, reportPath); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
