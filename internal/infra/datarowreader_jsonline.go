@@ -29,6 +29,8 @@ import (
 	"github.com/cgi-fr/mimo/pkg/mimo"
 )
 
+const linebreak byte = 10
+
 type DataRowReaderJSONLine struct {
 	input  *bufio.Scanner
 	output *bufio.Writer
@@ -72,8 +74,10 @@ func (drr *DataRowReaderJSONLine) ReadDataRowAndWrite() (mimo.DataRow, error) {
 	var data mimo.DataRow
 
 	if drr.input.Scan() {
-		if _, err := drr.output.Write(append(drr.input.Bytes(), '\n')); err != nil {
-			return nil, fmt.Errorf("%w", err)
+		if drr.output != nil {
+			if err := drr.writeLine(); err != nil {
+				return nil, err
+			}
 		}
 
 		data = mimo.DataRow{}
@@ -93,6 +97,22 @@ func (drr *DataRowReaderJSONLine) ReadDataRowAndWrite() (mimo.DataRow, error) {
 	return data, nil
 }
 
+func (drr *DataRowReaderJSONLine) writeLine() error {
+	if _, err := drr.output.Write(drr.input.Bytes()); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if err := drr.output.WriteByte(linebreak); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
+
 func (drr *DataRowReaderJSONLine) Flush() error {
+	if drr.output == nil {
+		return nil
+	}
+
 	return fmt.Errorf("%w", drr.output.Flush())
 }
