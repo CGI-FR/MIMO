@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1695923528487,
+  "lastUpdate": 1695993450096,
   "repoUrl": "https://github.com/CGI-FR/MIMO",
   "entries": {
     "Benchmark": [
@@ -798,6 +798,84 @@ window.BENCHMARK_DATA = {
             "value": 2,
             "unit": "allocs/op",
             "extra": "124397624 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44274230+adrienaury@users.noreply.github.com",
+            "name": "Adrien Aury",
+            "username": "adrienaury"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "505e0a4d18d7423644a8558410d7a8b9032689ac",
+          "message": "perf: use fast json marshaller (#37)\n\n* perf: use fast json marshaller\r\n\r\n* chore: test golint with timeout 10m\r\n\r\n* feat: add new flags for output and profiling\r\n\r\n* test: output flag\r\n\r\n* feat: auto create folders for report\r\n\r\n* feat: auto create folders for report",
+          "timestamp": "2023-09-29T15:12:50+02:00",
+          "tree_id": "260f3d14a2896d2f868e7caa5701ab00bfd2804b",
+          "url": "https://github.com/CGI-FR/MIMO/commit/505e0a4d18d7423644a8558410d7a8b9032689ac"
+        },
+        "date": 1695993449523,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkInMemory - ns/op",
+            "value": 46.73,
+            "unit": "ns/op",
+            "extra": "251563383 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "251563383 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "251563383 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - ns/op",
+            "value": 49.73,
+            "unit": "ns/op",
+            "extra": "235994389 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "235994389 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "235994389 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - ns/op",
+            "value": 46.99,
+            "unit": "ns/op",
+            "extra": "263272315 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "263272315 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "263272315 times\n2 procs"
           }
         ]
       }
