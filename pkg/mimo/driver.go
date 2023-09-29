@@ -50,13 +50,14 @@ func (d *Driver) Configure(c Config) {
 }
 
 func (d *Driver) Analyze() (Report, error) {
+	defer d.maskDataSource.Close()
 	for {
 		realRow, err := d.realDataSource.ReadDataRow()
 		if err != nil {
 			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
 
-		maskedRow, err := d.maskDataSource.ReadDataRow()
+		maskedRow, err := d.maskDataSource.ReadDataRowAndWrite()
 		if err != nil {
 			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
