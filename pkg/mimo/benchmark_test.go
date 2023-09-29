@@ -18,6 +18,8 @@
 package mimo_test
 
 import (
+	"io"
+	"os"
 	"testing"
 
 	"github.com/cgi-fr/mimo/internal/infra"
@@ -33,10 +35,12 @@ func BenchmarkInMemory(b *testing.B) {
 		b.FailNow()
 	}
 
-	maskedReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/masked.jsonl")
+	file, err := os.Open("testdata/masked.jsonl")
 	if err != nil {
 		b.FailNow()
 	}
+
+	maskedReader := infra.NewDataRowReaderJSONLine(file, io.Discard)
 
 	driver := mimo.NewDriver(
 		realReader,
@@ -72,10 +76,12 @@ func BenchmarkOnDisk(b *testing.B) {
 		b.FailNow()
 	}
 
-	maskedReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/masked.jsonl")
+	file, err := os.Open("testdata/masked.jsonl")
 	if err != nil {
 		b.FailNow()
 	}
+
+	maskedReader := infra.NewDataRowReaderJSONLine(file, io.Discard)
 
 	driver := mimo.NewDriver(
 		realReader,
@@ -117,10 +123,12 @@ func BenchmarkAllOptions(b *testing.B) {
 		b.FailNow()
 	}
 
-	maskedReader, err := infra.NewDataRowReaderJSONLineFromFile("testdata/single-100-2.jsonl")
+	file, err := os.Open("testdata/single-100-2.jsonl")
 	if err != nil {
 		b.FailNow()
 	}
+
+	maskedReader := infra.NewDataRowReaderJSONLine(file, io.Discard)
 
 	driver := mimo.NewDriver(
 		realReader,
