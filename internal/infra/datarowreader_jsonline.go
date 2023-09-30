@@ -32,6 +32,10 @@ import (
 const linebreak byte = 10
 
 type DataRowReaderJSONLine struct {
+	input *bufio.Scanner
+}
+
+type DataRowReaderWriterJSONLine struct {
 	input  *bufio.Scanner
 	output *bufio.Writer
 }
@@ -42,11 +46,11 @@ func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, 
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(source), output: nil}, nil
+	return &DataRowReaderJSONLine{input: bufio.NewScanner(source)}, nil
 }
 
-func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderJSONLine {
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(input), output: bufio.NewWriter(output)}
+func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderWriterJSONLine {
+	return &DataRowReaderWriterJSONLine{input: bufio.NewScanner(input), output: bufio.NewWriter(output)}
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
@@ -70,7 +74,11 @@ func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
 	return data, nil
 }
 
-func (drr *DataRowReaderJSONLine) ReadDataRowAndWrite() (mimo.DataRow, error) {
+func (drr *DataRowReaderJSONLine) Close() error {
+	return nil
+}
+
+func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
 	var data mimo.DataRow
 
 	if drr.input.Scan() {
@@ -97,7 +105,7 @@ func (drr *DataRowReaderJSONLine) ReadDataRowAndWrite() (mimo.DataRow, error) {
 	return data, nil
 }
 
-func (drr *DataRowReaderJSONLine) writeLine() error {
+func (drr *DataRowReaderWriterJSONLine) writeLine() error {
 	if _, err := drr.output.Write(drr.input.Bytes()); err != nil {
 		return fmt.Errorf("%w", err)
 	}
@@ -109,7 +117,7 @@ func (drr *DataRowReaderJSONLine) writeLine() error {
 	return nil
 }
 
-func (drr *DataRowReaderJSONLine) Flush() error {
+func (drr *DataRowReaderWriterJSONLine) Close() error {
 	if drr.output == nil {
 		return nil
 	}

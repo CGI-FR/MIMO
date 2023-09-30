@@ -50,7 +50,8 @@ func (d *Driver) Configure(c Config) {
 }
 
 func (d *Driver) Analyze() (Report, error) {
-	defer d.maskDataSource.Flush()
+	defer d.realDataSource.Close()
+	defer d.maskDataSource.Close()
 
 	for {
 		realRow, err := d.realDataSource.ReadDataRow()
@@ -58,7 +59,7 @@ func (d *Driver) Analyze() (Report, error) {
 			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
 
-		maskedRow, err := d.maskDataSource.ReadDataRowAndWrite()
+		maskedRow, err := d.maskDataSource.ReadDataRow()
 		if err != nil {
 			return d.report, fmt.Errorf("%w: %w", ErrReadingDataRow, err)
 		}
