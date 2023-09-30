@@ -342,8 +342,8 @@ type Report struct {
 
 func NewReport(
 	subs []EventSubscriber, config Config, multiMapFactory MultimapFactory, counterFactory CounterFactory,
-) Report {
-	return Report{make(map[string]Metrics), subs, config, multiMapFactory, counterFactory}
+) *Report {
+	return &Report{make(map[string]Metrics), subs, config, multiMapFactory, counterFactory}
 }
 
 func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, stack []any, path ...string) {

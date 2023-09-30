@@ -142,7 +142,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	haserror := false
 
-	var report mimo.Report
+	var report *mimo.Report
 
 	if report, err = runAnalyse(driver, profiling); err != nil {
 		return fmt.Errorf("%w", err)
@@ -175,14 +175,14 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	return nil
 }
 
-func runAnalyse(driver mimo.Driver, profiling bool) (mimo.Report, error) {
+func runAnalyse(driver mimo.Driver, profiling bool) (*mimo.Report, error) {
 	var cpuProfiler interface{ Stop() }
 
 	if profiling {
 		cpuProfiler = profile.Start(profile.ProfilePath("."))
 	}
 
-	var report mimo.Report
+	var report *mimo.Report
 
 	report, err := driver.Analyze()
 	if err != nil {
@@ -251,7 +251,7 @@ func selectCounterFactory() mimo.CounterFactory {
 	return counterFactory
 }
 
-func appendColumnMetric(report mimo.Report, colname string, haserror bool) bool {
+func appendColumnMetric(report *mimo.Report, colname string, haserror bool) bool {
 	metrics := report.ColumnMetric(colname)
 	if metrics.Validate() >= 0 {
 		log.Info().
