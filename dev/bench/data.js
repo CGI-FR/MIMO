@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696015914751,
+  "lastUpdate": 1696072156931,
   "repoUrl": "https://github.com/CGI-FR/MIMO",
   "entries": {
     "Benchmark": [
@@ -1032,6 +1032,84 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "249507102 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44274230+adrienaury@users.noreply.github.com",
+            "name": "Adrien Aury",
+            "username": "adrienaury"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "e2ac847f3f121d46c24087eb80b3287c3374e44d",
+          "message": "perf: use buffered output (#39)\n\n* perf: use buffered output\r\n\r\n* perf: use buffered output\r\n\r\n* perf: use buffered output\r\n\r\n* perf: use buffered output\r\n\r\n* perf: use buffered output\r\n\r\n* perf: put mimo.Report on the heap",
+          "timestamp": "2023-09-30T13:05:31+02:00",
+          "tree_id": "f48d99c3ef818e53899a6fe56434d19dc24596be",
+          "url": "https://github.com/CGI-FR/MIMO/commit/e2ac847f3f121d46c24087eb80b3287c3374e44d"
+        },
+        "date": 1696072156187,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkInMemory - ns/op",
+            "value": 37.81,
+            "unit": "ns/op",
+            "extra": "317377052 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "317377052 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "317377052 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - ns/op",
+            "value": 39.42,
+            "unit": "ns/op",
+            "extra": "290250480 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "290250480 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "290250480 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - ns/op",
+            "value": 37.91,
+            "unit": "ns/op",
+            "extra": "314623419 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "314623419 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "314623419 times\n2 procs"
           }
         ]
       }
