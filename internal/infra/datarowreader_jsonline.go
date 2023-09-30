@@ -29,9 +29,15 @@ import (
 	"github.com/cgi-fr/mimo/pkg/mimo"
 )
 
+const linebreak byte = 10
+
 type DataRowReaderJSONLine struct {
+	input *bufio.Scanner
+}
+
+type DataRowReaderWriterJSONLine struct {
 	input  *bufio.Scanner
-	output io.Writer
+	output *bufio.Writer
 }
 
 func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, error) {
@@ -40,19 +46,46 @@ func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, 
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(source), output: io.Discard}, nil
+	return &DataRowReaderJSONLine{input: bufio.NewScanner(source)}, nil
 }
 
-func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderJSONLine {
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(input), output: output}
+func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderWriterJSONLine {
+	return &DataRowReaderWriterJSONLine{input: bufio.NewScanner(input), output: bufio.NewWriter(output)}
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
 	var data mimo.DataRow
 
 	if drr.input.Scan() {
-		if _, err := drr.output.Write(append(drr.input.Bytes(), '\n')); err != nil {
+		data = mimo.DataRow{}
+		if err := json.UnmarshalNoEscape(drr.input.Bytes(), &data); err != nil {
 			return nil, fmt.Errorf("%w", err)
+		}
+	}
+
+	if err := drr.input.Err(); err != nil {
+		if errors.Is(err, io.EOF) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("%w", err)
+	}
+
+	return data, nil
+}
+
+func (drr *DataRowReaderJSONLine) Close() error {
+	return nil
+}
+
+func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
+	var data mimo.DataRow
+
+	if drr.input.Scan() {
+		if drr.output != nil {
+			if err := drr.writeLine(); err != nil {
+				return nil, err
+			}
 		}
 
 		data = mimo.DataRow{}
@@ -70,4 +103,24 @@ func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
 	}
 
 	return data, nil
+}
+
+func (drr *DataRowReaderWriterJSONLine) writeLine() error {
+	if _, err := drr.output.Write(drr.input.Bytes()); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	if err := drr.output.WriteByte(linebreak); err != nil {
+		return fmt.Errorf("%w", err)
+	}
+
+	return nil
+}
+
+func (drr *DataRowReaderWriterJSONLine) Close() error {
+	if drr.output == nil {
+		return nil
+	}
+
+	return fmt.Errorf("%w", drr.output.Flush())
 }

@@ -27,7 +27,7 @@ type Driver struct {
 	realDataSource DataRowReader
 	maskDataSource DataRowReader
 	subscribers    Suscribers
-	report         Report
+	report         *Report
 }
 
 func NewDriver(
@@ -49,7 +49,10 @@ func (d *Driver) Configure(c Config) {
 	d.report.config = c
 }
 
-func (d *Driver) Analyze() (Report, error) {
+func (d *Driver) Analyze() (*Report, error) {
+	defer d.realDataSource.Close()
+	defer d.maskDataSource.Close()
+
 	for {
 		realRow, err := d.realDataSource.ReadDataRow()
 		if err != nil {
