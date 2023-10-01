@@ -19,6 +19,7 @@ package mimo
 
 import (
 	"strings"
+	"text/template"
 
 	"github.com/rs/zerolog/log"
 )
@@ -29,18 +30,18 @@ func (d *Driver) preprocess(row DataRow) {
 	}
 }
 
-func preprocessValue(value any, paths []string, stack []any, templstr string, root DataRow) {
+func preprocessValue(value any, paths []string, stack []any, tmpl *template.Template, root DataRow) {
 	path := paths[0]
 
 	var err error
 
 	if len(paths) == 1 {
 		if obj, ok := value.(map[string]any); ok {
-			obj[path], err = applyTemplate(templstr, root, append(stack, obj))
+			obj[path], err = applyTemplate(tmpl, root, append(stack, obj))
 		}
 
 		if obj, ok := value.(DataRow); ok {
-			obj[path], err = applyTemplate(templstr, root, append(stack, obj))
+			obj[path], err = applyTemplate(tmpl, root, append(stack, obj))
 		}
 
 		if err != nil {
@@ -53,7 +54,7 @@ func preprocessValue(value any, paths []string, stack []any, templstr string, ro
 	if path == "[]" {
 		if array, ok := value.([]any); ok {
 			for _, item := range array {
-				preprocessValue(item, paths[1:], append(stack, array), templstr, root) //nolint:asasalint
+				preprocessValue(item, paths[1:], append(stack, array), tmpl, root) //nolint:asasalint
 			}
 		}
 
@@ -61,10 +62,10 @@ func preprocessValue(value any, paths []string, stack []any, templstr string, ro
 	}
 
 	if obj, ok := value.(map[string]any); ok {
-		preprocessValue(obj[path], paths[1:], append(stack, obj), templstr, root)
+		preprocessValue(obj[path], paths[1:], append(stack, obj), tmpl, root)
 	}
 
 	if obj, ok := value.(DataRow); ok {
-		preprocessValue(obj[path], paths[1:], append(stack, obj), templstr, root)
+		preprocessValue(obj[path], paths[1:], append(stack, obj), tmpl, root)
 	}
 }

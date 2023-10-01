@@ -425,7 +425,7 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		coherenceValues = []any{realValue}
 	}
 
-	if len(config.ExcludeTemplate) > 0 {
+	if config.ExcludeTemplate != nil {
 		result, err := applyTemplate(config.ExcludeTemplate, root, stack)
 
 		log.Err(err).Str("result", result).Msg("compute exclusion from template")
@@ -454,7 +454,7 @@ func computeCoherenceValues(config ColumnConfig, root DataRow, stack []any) []an
 		}
 	}
 
-	if len(config.CoherentSource) > 0 {
+	if config.CoherentSource != nil {
 		source, err := applyTemplate(config.CoherentSource, root, stack)
 
 		log.Err(err).Str("result", source).Msg("generating coherence source from template")

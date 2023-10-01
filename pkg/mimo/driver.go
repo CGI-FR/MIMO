@@ -19,7 +19,10 @@ package mimo
 
 import (
 	"fmt"
+	"strings"
+	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/rs/zerolog/log"
 )
 
@@ -109,4 +112,24 @@ func (d Driver) Close() error {
 	}
 
 	return nil
+}
+
+func CompileTemplate(tmplstr string) (*template.Template, error) {
+	if len(tmplstr) > 0 {
+		funcmap := template.FuncMap{
+			"Stack":    func(index int) any { return nil },
+			"ToUpper":  strings.ToUpper,
+			"ToLower":  strings.ToLower,
+			"NoAccent": rmAcc,
+		}
+
+		tmpl, err := template.New("").Funcs(funcmap).Funcs(sprig.TxtFuncMap()).Parse(tmplstr)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
+
+		return tmpl, nil
+	}
+
+	return nil, nil //nolint:nilnil
 }

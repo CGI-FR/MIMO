@@ -141,14 +141,29 @@ func BenchmarkAllOptions(b *testing.B) {
 
 	defer driver.Close()
 
+	excludeTmpl, err := mimo.CompileTemplate(`{{uuidv4 | contains "a"}}`)
+	if err != nil {
+		b.FailNow()
+	}
+
+	coherentSourceTmpl, err := mimo.CompileTemplate("{{.name | NoAccent | title}} {{.surname | NoAccent | upper}}")
+	if err != nil {
+		b.FailNow()
+	}
+
+	pprocTmpl, err := mimo.CompileTemplate("{{.name | NoAccent | lower}}.{{.surname | NoAccent | lower}}@{{uuidv4}}.com")
+	if err != nil {
+		b.FailNow()
+	}
+
 	driver.Configure(mimo.Config{
 		ColumnNames: []string{"value"},
 		ColumnConfigs: map[string]mimo.ColumnConfig{
 			"value": {
 				Exclude:         []any{"Odile", "Tiffany"},
-				ExcludeTemplate: `{{uuidv4 | contains "a"}}`,
+				ExcludeTemplate: excludeTmpl,
 				CoherentWith:    []string{"name", "surname"},
-				CoherentSource:  "{{.name | NoAccent | title}} {{.surname | NoAccent | upper}}",
+				CoherentSource:  coherentSourceTmpl,
 				Constraints: []mimo.Constraint{
 					{
 						Target: mimo.MaskingRate,
@@ -162,7 +177,7 @@ func BenchmarkAllOptions(b *testing.B) {
 		PreprocessConfigs: []mimo.PreprocessConfig{
 			{
 				Path:  "email",
-				Value: "{{.name | NoAccent | lower}}.{{.surname | NoAccent | lower}}@{{uuidv4}}.com",
+				Value: pprocTmpl,
 			},
 		},
 	})

@@ -18,7 +18,6 @@
 package mimo
 
 import (
-	"fmt"
 	"strings"
 	"text/template"
 	"unicode"
@@ -29,18 +28,15 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-func applyTemplate(tmplstring string, root DataRow, stack []any) (string, error) {
+func applyTemplate(tmpl *template.Template, root DataRow, stack []any) (string, error) {
 	funcmap := generateFuncMap()
 
 	funcmap["Stack"] = generateStackFunc(stack)
 
-	tmpl, err := template.New("template").Funcs(sprig.TxtFuncMap()).Funcs(funcmap).Parse(tmplstring)
-	if err != nil {
-		return "", fmt.Errorf("%w", err)
-	}
+	tmpl = tmpl.Funcs(sprig.TxtFuncMap()).Funcs(funcmap)
 
 	result := &strings.Builder{}
-	err = tmpl.Execute(result, root)
+	err := tmpl.Execute(result, root)
 
 	return result.String(), err
 }

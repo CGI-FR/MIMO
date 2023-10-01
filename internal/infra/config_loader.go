@@ -84,18 +84,30 @@ func LoadConfig(filename string) (mimo.Config, error) {
 	return CreateConfig(config)
 }
 
-//nolint:cyclop
+//nolint:cyclop,funlen
 func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 	config := mimo.NewConfig()
 
-	CreatePreprocesses(yamlconfig, &config)
+	if err := CreatePreprocesses(yamlconfig, &config); err != nil {
+		return config, err
+	}
 
 	for _, yamlcolumn := range yamlconfig.Columns {
+		excludeTmpl, err := mimo.CompileTemplate(yamlcolumn.ExcludeTemplate)
+		if err != nil {
+			return config, fmt.Errorf("%w", err)
+		}
+
+		coherentTmpl, err := mimo.CompileTemplate(yamlcolumn.CoherentSource)
+		if err != nil {
+			return config, fmt.Errorf("%w", err)
+		}
+
 		column := mimo.ColumnConfig{
 			Exclude:         yamlcolumn.Exclude,
-			ExcludeTemplate: yamlcolumn.ExcludeTemplate,
+			ExcludeTemplate: excludeTmpl,
 			CoherentWith:    yamlcolumn.CoherentWith,
-			CoherentSource:  yamlcolumn.CoherentSource,
+			CoherentSource:  coherentTmpl,
 			Constraints:     []mimo.Constraint{},
 			Alias:           yamlcolumn.Alias,
 		}
@@ -145,12 +157,19 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 	return config, nil
 }
 
-func CreatePreprocesses(yamlconfig *YAMLStructure, config *mimo.Config) {
+func CreatePreprocesses(yamlconfig *YAMLStructure, config *mimo.Config) error {
 	for _, yamlpreprocess := range yamlconfig.Preprocesses {
+		valueTmpl, err := mimo.CompileTemplate(yamlpreprocess.Value)
+		if err != nil {
+			return fmt.Errorf("%w", err)
+		}
+
 		preprocess := mimo.PreprocessConfig{
 			Path:  yamlpreprocess.Path,
-			Value: yamlpreprocess.Value,
+			Value: valueTmpl,
 		}
 		config.PreprocessConfigs = append(config.PreprocessConfigs, preprocess)
 	}
+
+	return nil
 }
