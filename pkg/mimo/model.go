@@ -425,8 +425,8 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		coherenceValues = []any{realValue}
 	}
 
-	if len(config.ExcludeTemplate) > 0 {
-		result, err := applyTemplate(config.ExcludeTemplate, root, stack)
+	if config.ExcludeTemplate != nil {
+		result, err := config.ExcludeTemplate.Execute(root, stack)
 
 		log.Err(err).Str("result", result).Msg("compute exclusion from template")
 
@@ -454,8 +454,8 @@ func computeCoherenceValues(config ColumnConfig, root DataRow, stack []any) []an
 		}
 	}
 
-	if len(config.CoherentSource) > 0 {
-		source, err := applyTemplate(config.CoherentSource, root, stack)
+	if config.CoherentSource != nil {
+		source, err := config.CoherentSource.Execute(root, stack)
 
 		log.Err(err).Str("result", source).Msg("generating coherence source from template")
 
@@ -489,7 +489,11 @@ func toString(value any) (string, bool) {
 	switch tvalue := value.(type) {
 	case string:
 		str = strconv.Quote(tvalue)
-	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8, float32, float64, bool:
+	case float64:
+		str = strconv.FormatFloat(tvalue, 'g', -1, 64)
+	case bool:
+		str = strconv.FormatBool(tvalue)
+	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
 		str = fmt.Sprint(tvalue)
 	case json.Number:
 		str = string(tvalue)

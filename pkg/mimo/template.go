@@ -29,30 +29,43 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-func applyTemplate(tmplstring string, root DataRow, stack []any) (string, error) {
-	funcmap := generateFuncMap()
+type Template struct {
+	tpml *template.Template
+}
 
-	funcmap["Stack"] = generateStackFunc(stack)
+func NewTemplate(tmplstr string) (*Template, error) {
+	if len(tmplstr) > 0 {
+		tmpl, err := template.New("").Funcs(generateFuncMap()).Funcs(sprig.TxtFuncMap()).Parse(tmplstr)
+		if err != nil {
+			return nil, fmt.Errorf("%w", err)
+		}
 
-	tmpl, err := template.New("template").Funcs(sprig.TxtFuncMap()).Funcs(funcmap).Parse(tmplstring)
-	if err != nil {
-		return "", fmt.Errorf("%w", err)
+		return &Template{tmpl}, nil
 	}
 
+	return nil, nil //nolint:nilnil
+}
+
+func (t *Template) Execute(root DataRow, stack []any) (string, error) {
+	funcstack := template.FuncMap{
+		"Stack": generateStackFunc(stack),
+	}
+
+	tmpl := t.tpml.Funcs(funcstack)
+
 	result := &strings.Builder{}
-	err = tmpl.Execute(result, root)
+	err := tmpl.Execute(result, root)
 
 	return result.String(), err
 }
 
 func generateFuncMap() template.FuncMap {
-	funcMap := template.FuncMap{}
-
-	funcMap["ToUpper"] = strings.ToUpper
-	funcMap["ToLower"] = strings.ToLower
-	funcMap["NoAccent"] = rmAcc
-
-	return funcMap
+	return template.FuncMap{
+		"Stack":    func(index int) any { return nil },
+		"ToUpper":  strings.ToUpper,
+		"ToLower":  strings.ToLower,
+		"NoAccent": rmAcc,
+	}
 }
 
 func generateStackFunc(theStack []any) func(index int) any {

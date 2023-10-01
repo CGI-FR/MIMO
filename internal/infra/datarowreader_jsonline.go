@@ -19,7 +19,6 @@ package infra
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -32,7 +31,7 @@ import (
 const linebreak byte = 10
 
 type DataRowReaderJSONLine struct {
-	input *bufio.Scanner
+	decoder *json.Decoder
 }
 
 type DataRowReaderWriterJSONLine struct {
@@ -46,7 +45,7 @@ func NewDataRowReaderJSONLineFromFile(filename string) (*DataRowReaderJSONLine, 
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return &DataRowReaderJSONLine{input: bufio.NewScanner(source)}, nil
+	return &DataRowReaderJSONLine{decoder: json.NewDecoder(source)}, nil
 }
 
 func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderWriterJSONLine {
@@ -54,24 +53,16 @@ func NewDataRowReaderJSONLine(input io.Reader, output io.Writer) *DataRowReaderW
 }
 
 func (drr *DataRowReaderJSONLine) ReadDataRow() (mimo.DataRow, error) {
-	var data mimo.DataRow
-
-	if drr.input.Scan() {
-		data = mimo.DataRow{}
-		if err := json.UnmarshalNoEscape(drr.input.Bytes(), &data); err != nil {
+	if drr.decoder.More() {
+		data := mimo.DataRow{}
+		if err := drr.decoder.Decode(&data); err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
+
+		return data, nil
 	}
 
-	if err := drr.input.Err(); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil, nil
-		}
-
-		return nil, fmt.Errorf("%w", err)
-	}
-
-	return data, nil
+	return nil, nil
 }
 
 func (drr *DataRowReaderJSONLine) Close() error {
@@ -79,8 +70,6 @@ func (drr *DataRowReaderJSONLine) Close() error {
 }
 
 func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
-	var data mimo.DataRow
-
 	if drr.input.Scan() {
 		if drr.output != nil {
 			if err := drr.writeLine(); err != nil {
@@ -88,21 +77,19 @@ func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
 			}
 		}
 
-		data = mimo.DataRow{}
+		data := mimo.DataRow{}
 		if err := json.UnmarshalNoEscape(drr.input.Bytes(), &data); err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
+
+		return data, nil
 	}
 
 	if err := drr.input.Err(); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil, nil
-		}
-
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return data, nil
+	return nil, nil
 }
 
 func (drr *DataRowReaderWriterJSONLine) writeLine() error {

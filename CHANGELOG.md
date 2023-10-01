@@ -14,6 +14,10 @@ Types of changes
 - `Fixed` for any bug fixes.
 - `Security` in case of vulnerabilities.
 
+## [0.8.0]
+
+- `Added` improvements for global performance (2 times faster).
+
 ## [0.7.0]
 
 - `Added` improvements for global performance (2 to 3 times faster).
