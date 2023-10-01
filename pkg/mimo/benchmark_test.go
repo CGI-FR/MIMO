@@ -141,17 +141,17 @@ func BenchmarkAllOptions(b *testing.B) {
 
 	defer driver.Close()
 
-	excludeTmpl, err := mimo.CompileTemplate(`{{uuidv4 | contains "a"}}`)
+	excludeTmpl, err := mimo.NewTemplate(`{{uuidv4 | contains "a"}}`)
 	if err != nil {
 		b.FailNow()
 	}
 
-	coherentSourceTmpl, err := mimo.CompileTemplate("{{.name | NoAccent | title}} {{.surname | NoAccent | upper}}")
+	coherentSourceTmpl, err := mimo.NewTemplate("{{.name | NoAccent | title}} {{.surname | NoAccent | upper}}")
 	if err != nil {
 		b.FailNow()
 	}
 
-	pprocTmpl, err := mimo.CompileTemplate("{{.name | NoAccent | lower}}.{{.surname | NoAccent | lower}}@{{uuidv4}}.com")
+	pprocTmpl, err := mimo.NewTemplate("{{.name | NoAccent | lower}}.{{.surname | NoAccent | lower}}@{{uuidv4}}.com")
 	if err != nil {
 		b.FailNow()
 	}

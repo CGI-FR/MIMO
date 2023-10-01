@@ -19,7 +19,6 @@ package mimo
 
 import (
 	"strings"
-	"text/template"
 
 	"github.com/rs/zerolog/log"
 )
@@ -30,18 +29,18 @@ func (d *Driver) preprocess(row DataRow) {
 	}
 }
 
-func preprocessValue(value any, paths []string, stack []any, tmpl *template.Template, root DataRow) {
+func preprocessValue(value any, paths []string, stack []any, tmpl *Template, root DataRow) {
 	path := paths[0]
 
 	var err error
 
 	if len(paths) == 1 {
 		if obj, ok := value.(map[string]any); ok {
-			obj[path], err = applyTemplate(tmpl, root, append(stack, obj))
+			obj[path], err = tmpl.Execute(root, append(stack, obj))
 		}
 
 		if obj, ok := value.(DataRow); ok {
-			obj[path], err = applyTemplate(tmpl, root, append(stack, obj))
+			obj[path], err = tmpl.Execute(root, append(stack, obj))
 		}
 
 		if err != nil {

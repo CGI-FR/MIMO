@@ -93,12 +93,12 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 	}
 
 	for _, yamlcolumn := range yamlconfig.Columns {
-		excludeTmpl, err := mimo.CompileTemplate(yamlcolumn.ExcludeTemplate)
+		excludeTmpl, err := mimo.NewTemplate(yamlcolumn.ExcludeTemplate)
 		if err != nil {
 			return config, fmt.Errorf("%w", err)
 		}
 
-		coherentTmpl, err := mimo.CompileTemplate(yamlcolumn.CoherentSource)
+		coherentTmpl, err := mimo.NewTemplate(yamlcolumn.CoherentSource)
 		if err != nil {
 			return config, fmt.Errorf("%w", err)
 		}
@@ -159,7 +159,7 @@ func CreateConfig(yamlconfig *YAMLStructure) (mimo.Config, error) {
 
 func CreatePreprocesses(yamlconfig *YAMLStructure, config *mimo.Config) error {
 	for _, yamlpreprocess := range yamlconfig.Preprocesses {
-		valueTmpl, err := mimo.CompileTemplate(yamlpreprocess.Value)
+		valueTmpl, err := mimo.NewTemplate(yamlpreprocess.Value)
 		if err != nil {
 			return fmt.Errorf("%w", err)
 		}

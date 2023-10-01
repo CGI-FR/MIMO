@@ -17,8 +17,6 @@
 
 package mimo
 
-import "text/template"
-
 type Config struct {
 	ColumnNames       []string
 	ColumnConfigs     map[string]ColumnConfig
@@ -26,19 +24,19 @@ type Config struct {
 }
 
 type ColumnConfig struct {
-	Exclude         []any              // exclude values from the masking rate (default: exclude only nil values)
-	ExcludeTemplate *template.Template // exclude values if template expression evaluate to True (default: False)
-	CoherentWith    []string           // list of fields use for coherent rate computation (default: the current field)
-	CoherentSource  *template.Template // template to execute to create coherence source
-	Constraints     []Constraint       // list of constraints to validate
-	Alias           string             // alias to use in persisted data
+	Exclude         []any        // exclude values from the masking rate (default: exclude only nil values)
+	ExcludeTemplate *Template    // exclude values if template expression evaluate to True (default: False)
+	CoherentWith    []string     // list of fields use for coherent rate computation (default: the current field)
+	CoherentSource  *Template    // template to execute to create coherence source
+	Constraints     []Constraint // list of constraints to validate
+	Alias           string       // alias to use in persisted data
 
 	excluded bool
 }
 
 type PreprocessConfig struct {
 	Path  string
-	Value *template.Template
+	Value *Template
 }
 
 type Constraint struct {
