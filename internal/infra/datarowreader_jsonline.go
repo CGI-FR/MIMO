@@ -19,7 +19,6 @@ package infra
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -71,8 +70,6 @@ func (drr *DataRowReaderJSONLine) Close() error {
 }
 
 func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
-	var data mimo.DataRow
-
 	if drr.input.Scan() {
 		if drr.output != nil {
 			if err := drr.writeLine(); err != nil {
@@ -80,21 +77,19 @@ func (drr *DataRowReaderWriterJSONLine) ReadDataRow() (mimo.DataRow, error) {
 			}
 		}
 
-		data = mimo.DataRow{}
+		data := mimo.DataRow{}
 		if err := json.UnmarshalNoEscape(drr.input.Bytes(), &data); err != nil {
 			return nil, fmt.Errorf("%w", err)
 		}
+
+		return data, nil
 	}
 
 	if err := drr.input.Err(); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil, nil
-		}
-
 		return nil, fmt.Errorf("%w", err)
 	}
 
-	return data, nil
+	return nil, nil
 }
 
 func (drr *DataRowReaderWriterJSONLine) writeLine() error {
