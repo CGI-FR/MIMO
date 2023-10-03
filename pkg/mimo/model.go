@@ -75,18 +75,20 @@ func NewMetrics(
 	}
 }
 
+//nolint:cyclop
 func (m *Metrics) Update(
 	fieldname string,
-	realValue any,
-	maskedValue any,
-	coherenceValue []any,
-	subs Suscribers,
-	config ColumnConfig,
+	realValue any, maskedValue any, coherenceValue []any,
+	subs Suscribers, config ColumnConfig,
 ) bool {
 	realType, realValueStr, realValueOk := toString(realValue)
 	maskedType, maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if !realValueOk || !maskedValueOk {
+		if config.IgnoreDisparities {
+			return false
+		}
+
 		log.Panic().
 			Str("name", fieldname).
 			Msg(fmt.Sprintf("%s: real structure is %T, masked structure is %T", ErrDisparityStruct, realValue, maskedValue))
@@ -116,7 +118,9 @@ func (m *Metrics) Update(
 		return true
 	}
 
-	checkType(realType, maskedType, fieldname)
+	if !config.IgnoreDisparities {
+		checkType(realType, maskedType, fieldname)
+	}
 
 	if excluded {
 		m.backend.IncreaseIgnoredCount()
@@ -365,7 +369,7 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 		case map[string]any:
 			if typedMaskedValue, ok := maskedRow[key].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
-			} else {
+			} else if !r.config.IgnoreDisparities {
 				log.Panic().
 					Strs("path", newpath).
 					Msg(fmt.Sprintf("%s: real structure is object, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
@@ -373,7 +377,7 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 		case []any:
 			if typedMaskedValue, ok := maskedRow[key].([]any); ok {
 				r.UpdateArray(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
-			} else {
+			} else if !r.config.IgnoreDisparities {
 				log.Panic().
 					Strs("path", newpath).
 					Msg(fmt.Sprintf("%s: real structure is array, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
@@ -388,6 +392,7 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 	}
 }
 
+//nolint:cyclop
 func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, stack []any, path ...string) {
 	for index := 0; index < len(realArray) && index < len(maskedArray); index++ {
 		newpath := append(path, "[]") //nolint:gocritic
@@ -396,7 +401,7 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 		case map[string]any:
 			if typedMaskedItem, ok := maskedArray[index].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
-			} else {
+			} else if !r.config.IgnoreDisparities {
 				log.Panic().
 					Strs("path", newpath).
 					Int("index", index).
@@ -405,7 +410,7 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 		case []any:
 			if typedMaskedItem, ok := maskedArray[index].([]any); ok {
 				r.UpdateArray(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
-			} else {
+			} else if !r.config.IgnoreDisparities {
 				log.Panic().
 					Strs("path", newpath).
 					Int("index", index).
@@ -422,6 +427,7 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 	}
 }
 
+//nolint:cyclop
 func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
@@ -453,6 +459,10 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		if exclude, err := strconv.ParseBool(result); exclude && err == nil {
 			config.excluded = true
 		}
+	}
+
+	if r.config.IgnoreDisparities {
+		config.IgnoreDisparities = true
 	}
 
 	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {

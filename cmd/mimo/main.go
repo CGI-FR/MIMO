@@ -50,12 +50,13 @@ var (
 	debug     bool
 	colormode string
 
-	profiling   bool
-	configfile  string
-	watchFields []string
-	diskStorage bool
-	persist     string
-	reportPath  string
+	profiling         bool
+	configfile        string
+	watchFields       []string
+	diskStorage       bool
+	persist           string
+	reportPath        string
+	ignoreDisparities bool
 )
 
 func main() {
@@ -105,6 +106,7 @@ There is NO WARRANTY, to the extent permitted by law.`, version, commit, buildDa
 	rootCmd.PersistentFlags().StringVar(&persist, "persist", "",
 		"persist data in the specified directory (implies --disk-storage)")
 	rootCmd.PersistentFlags().StringVarP(&reportPath, "output", "o", "report.html", "output path for the HTML report")
+	rootCmd.PersistentFlags().BoolVarP(&ignoreDisparities, "ignore-disparities", "i", false, "ignore disparities in data")
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Err(err).Msg("error when executing command")
@@ -128,6 +130,10 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		}
 	}
 
+	if ignoreDisparities {
+		config.IgnoreDisparities = true
+	}
+
 	driver := mimo.NewDriver(
 		realReader,
 		maskedReader,
@@ -140,8 +146,6 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 
 	driver.Configure(config)
 
-	haserror := false
-
 	var report *mimo.Report
 
 	if report, err = runAnalyse(driver, profiling); err != nil {
@@ -149,10 +153,17 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 	}
 
 	columns := report.Columns()
+
+	return postAnalyze(columns, report)
+}
+
+func postAnalyze(columns []string, report *mimo.Report) error {
+	haserror := false
+
 	sort.Strings(columns)
 
 	for _, colname := range columns {
-		haserror = appendColumnMetric(report, colname, haserror)
+		haserror = haserror || appendColumnMetric(report, colname)
 	}
 
 	reportPath = strings.TrimSpace(reportPath)
@@ -164,7 +175,7 @@ func run(_ *cobra.Command, realJSONLineFileName string) error {
 		return fmt.Errorf("%w", err)
 	}
 
-	if err = infra.NewReportExporter().Export(report, reportPath); err != nil {
+	if err := infra.NewReportExporter().Export(report, reportPath); err != nil {
 		return fmt.Errorf("%w", err)
 	}
 
@@ -251,7 +262,7 @@ func selectCounterFactory() mimo.CounterFactory {
 	return counterFactory
 }
 
-func appendColumnMetric(report *mimo.Report, colname string, haserror bool) bool {
+func appendColumnMetric(report *mimo.Report, colname string) bool {
 	metrics := report.ColumnMetric(colname)
 	if metrics.Validate() >= 0 {
 		log.Info().
@@ -264,24 +275,25 @@ func appendColumnMetric(report *mimo.Report, colname string, haserror bool) bool
 			Float64("rate-coherence", metrics.Coherence.Rate()).
 			Float64("rate-identifiable", metrics.Identifiant.Rate()).
 			Msg("summmary for column " + colname)
-	} else {
-		log.Error().
-			Str("field", colname).
-			Int64("count-nil", metrics.NilCount()).
-			Int64("count-ignored", metrics.IgnoredCount()).
-			Int64("count-masked", metrics.MaskedCount()).
-			Int64("count-missed", metrics.NonMaskedCount()).
-			Float64("rate-masking", metrics.MaskedRate()).
-			Float64("rate-coherence", metrics.Coherence.Rate()).
-			Float64("rate-identifiable", metrics.Identifiant.Rate()).
-			Msg("summmary for column " + colname)
-		haserror = true
 
-		logSamples("coherence", "real-value", "pseudonyms", metrics.GetInvalidSamplesForCoherentRate(10))      //nolint:gomnd
-		logSamples("identifiant", "pseudonym", "real-values", metrics.GetInvalidSamplesForIdentifiantRate(10)) //nolint:gomnd
+		return false
 	}
 
-	return haserror
+	log.Error().
+		Str("field", colname).
+		Int64("count-nil", metrics.NilCount()).
+		Int64("count-ignored", metrics.IgnoredCount()).
+		Int64("count-masked", metrics.MaskedCount()).
+		Int64("count-missed", metrics.NonMaskedCount()).
+		Float64("rate-masking", metrics.MaskedRate()).
+		Float64("rate-coherence", metrics.Coherence.Rate()).
+		Float64("rate-identifiable", metrics.Identifiant.Rate()).
+		Msg("summmary for column " + colname)
+
+	logSamples("coherence", "real-value", "pseudonyms", metrics.GetInvalidSamplesForCoherentRate(10))      //nolint:gomnd
+	logSamples("identifiant", "pseudonym", "real-values", metrics.GetInvalidSamplesForIdentifiantRate(10)) //nolint:gomnd
+
+	return true
 }
 
 func logSamples(target, labelForValue, labelForAssigned string, samples []mimo.Sample) {

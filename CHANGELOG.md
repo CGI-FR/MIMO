@@ -18,6 +18,7 @@ Types of changes
 
 - `Added` improvements for global performance (2 times faster).
 - `Added` fatal errors if masked/real data contains disparity in types or structure.
+- `Added` flag `-i` or `--ignore-disparities` to ignore disparities.
 
 ## [0.7.0]
 
