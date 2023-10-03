@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1696155001968,
+  "lastUpdate": 1696361714924,
   "repoUrl": "https://github.com/CGI-FR/MIMO",
   "entries": {
     "Benchmark": [
@@ -1188,6 +1188,84 @@ window.BENCHMARK_DATA = {
             "value": 0,
             "unit": "allocs/op",
             "extra": "527697214 times\n2 procs"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "44274230+adrienaury@users.noreply.github.com",
+            "name": "Adrien Aury",
+            "username": "adrienaury"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "de26157f5a38579baff6a55a4efad6fb4a9c7928",
+          "message": "feat: disparity in data should trigger error (#43)\n\n* feat: values and pseudonyms are typed in logs\r\n\r\n* feat: disparity type fatal error\r\n\r\n* feat: disparity struct fatal error\r\n\r\n* feat: ignore disparities",
+          "timestamp": "2023-10-03T21:31:22+02:00",
+          "tree_id": "9b4c3f982af051ca4f9fe6fd418ac3e8b18a183d",
+          "url": "https://github.com/CGI-FR/MIMO/commit/de26157f5a38579baff6a55a4efad6fb4a9c7928"
+        },
+        "date": 1696361714543,
+        "tool": "go",
+        "benches": [
+          {
+            "name": "BenchmarkInMemory - ns/op",
+            "value": 27.11,
+            "unit": "ns/op",
+            "extra": "443868328 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "443868328 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkInMemory - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "443868328 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - ns/op",
+            "value": 27.68,
+            "unit": "ns/op",
+            "extra": "414753085 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "414753085 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkOnDisk - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "414753085 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - ns/op",
+            "value": 26.45,
+            "unit": "ns/op",
+            "extra": "448547702 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - B/op",
+            "value": 0,
+            "unit": "B/op",
+            "extra": "448547702 times\n2 procs"
+          },
+          {
+            "name": "BenchmarkAllOptions - allocs/op",
+            "value": 0,
+            "unit": "allocs/op",
+            "extra": "448547702 times\n2 procs"
           }
         ]
       }
