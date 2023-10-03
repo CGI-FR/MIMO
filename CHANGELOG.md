@@ -17,6 +17,7 @@ Types of changes
 ## [0.8.0]
 
 - `Added` improvements for global performance (2 times faster).
+- `Added` fatal errors if masked/real data contains disparity in types or structure.
 
 ## [0.7.0]
 

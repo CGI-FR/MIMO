@@ -49,9 +49,14 @@ func (d *Driver) Configure(c Config) {
 	d.report.config = c
 }
 
-func (d *Driver) Analyze() (*Report, error) {
+func (d *Driver) Analyze() (r *Report, err error) { //nolint:nonamedreturns
 	defer d.realDataSource.Close()
 	defer d.maskDataSource.Close()
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%w: %v", ErrAnalyze, r)
+		}
+	}()
 
 	for {
 		realRow, err := d.realDataSource.ReadDataRow()

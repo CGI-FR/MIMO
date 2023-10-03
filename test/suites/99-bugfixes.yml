@@ -27,10 +27,10 @@ testcases:
       - script: echo '{"value":3}' >> working/real.jsonl
       - script: echo '{"value":4}' >> working/real.jsonl
 
-      - script: echo '{"value":"A"}' > working/masked.jsonl
-      - script: echo '{"value":"B"}' >> working/masked.jsonl
-      - script: echo '{"value":"C"}' >> working/masked.jsonl
-      - script: echo '{"value":"D"}' >> working/masked.jsonl
+      - script: echo '{"value":5}' > working/masked.jsonl
+      - script: echo '{"value":6}' >> working/masked.jsonl
+      - script: echo '{"value":7}' >> working/masked.jsonl
+      - script: echo '{"value":8}' >> working/masked.jsonl
 
       - script: cat working/masked.jsonl | mimo --config ../configs/config_exclude_numeric.yaml -v3 working/real.jsonl
         assertions:

@@ -83,8 +83,8 @@ func (m *Metrics) Update(
 	subs Suscribers,
 	config ColumnConfig,
 ) bool {
-	realValueStr, realValueOk := toString(realValue)
-	maskedValueStr, maskedValueOk := toString(maskedValue)
+	realType, realValueStr, realValueOk := toString(realValue)
+	maskedType, maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if !realValueOk || !maskedValueOk {
 		return false
@@ -114,6 +114,8 @@ func (m *Metrics) Update(
 		return true
 	}
 
+	checkType(realType, maskedType, fieldname)
+
 	if excluded {
 		m.backend.IncreaseIgnoredCount()
 
@@ -129,6 +131,13 @@ func (m *Metrics) Update(
 	}
 
 	return true
+}
+
+func checkType(realType string, maskedType string, fieldname string) {
+	if realType != maskedType && maskedType != "nil" {
+		log.Panic().Str("name", fieldname).
+			Msg(fmt.Sprintf("%s: real value is %s, masked value is %s", ErrDisparityType, realType, maskedType))
+	}
 }
 
 func (m *Metrics) postNonMaskedValue(subs Suscribers, fieldname string, realValue any) {
@@ -484,33 +493,37 @@ func (r Report) ColumnMetric(colname string) Metrics {
 	return r.Metrics[colname]
 }
 
-func toString(value any) (string, bool) {
-	var str string
+const (
+	Number = "number"
+	Bool   = "bool"
+	String = "string"
+	Nil    = "nil"
+)
+
+func toString(value any) (string, string, bool) {
 	switch tvalue := value.(type) {
 	case string:
-		str = "string(" + tvalue + ")"
+		return String, "string(" + tvalue + ")", true
 	case float64:
-		str = "number(" + strconv.FormatFloat(tvalue, 'g', -1, 64) + ")"
+		return Number, "number(" + strconv.FormatFloat(tvalue, 'g', -1, 64) + ")", true
 	case bool:
-		str = "bool(" + strconv.FormatBool(tvalue) + ")"
+		return Bool, "bool(" + strconv.FormatBool(tvalue) + ")", true
 	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
-		str = "number(" + fmt.Sprint(tvalue) + ")"
+		return Number, "number(" + fmt.Sprint(tvalue) + ")", true
 	case json.Number:
-		str = "number(" + string(tvalue) + ")"
+		return Number, "number(" + string(tvalue) + ")", true
 	case nil:
-		str = "nil(nil)"
+		return Nil, "nil(nil)", true
 	default:
-		return "", false
+		return "", "", false
 	}
-
-	return str, true
 }
 
 func toStringSlice(values []any) string {
 	result := &strings.Builder{}
 
 	for _, value := range values {
-		if str, ok := toString(value); ok {
+		if _, str, ok := toString(value); ok {
 			result.WriteString(str)
 		}
 	}
@@ -541,7 +554,7 @@ func isExcluded(exclude []any, value any, valueStr string) bool {
 	}
 
 	for _, exVal := range exclude {
-		if exValStr, ok := toString(exVal); ok && valueStr == exValStr {
+		if _, exValStr, ok := toString(exVal); ok && valueStr == exValStr {
 			return true
 		}
 	}
