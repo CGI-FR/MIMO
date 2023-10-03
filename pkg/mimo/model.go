@@ -488,17 +488,17 @@ func toString(value any) (string, bool) {
 	var str string
 	switch tvalue := value.(type) {
 	case string:
-		str = strconv.Quote(tvalue)
+		str = "string(" + tvalue + ")"
 	case float64:
-		str = strconv.FormatFloat(tvalue, 'g', -1, 64)
+		str = "number(" + strconv.FormatFloat(tvalue, 'g', -1, 64) + ")"
 	case bool:
-		str = strconv.FormatBool(tvalue)
+		str = "bool(" + strconv.FormatBool(tvalue) + ")"
 	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
-		str = fmt.Sprint(tvalue)
+		str = "number(" + fmt.Sprint(tvalue) + ")"
 	case json.Number:
-		str = string(tvalue)
+		str = "number(" + string(tvalue) + ")"
 	case nil:
-		str = "nil"
+		str = "nil(nil)"
 	default:
 		return "", false
 	}
@@ -513,8 +513,6 @@ func toStringSlice(values []any) string {
 		if str, ok := toString(value); ok {
 			result.WriteString(str)
 		}
-
-		result.WriteString("_")
 	}
 
 	return result.String()
