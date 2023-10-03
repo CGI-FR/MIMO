@@ -37,6 +37,12 @@ Here is a single command that run an example on synthesized data (require PIMO) 
 pimo --empty-input --repeat 1000 --mask 'name=[{add:""},{randomChoiceInUri:"pimo://nameFR"}]' | tee real.jsonl | pimo --mask 'name={randomChoiceInUri:"pimo://nameFR"}' | mimo real.jsonl
 ```
 
+Here is a single command to test MIMO if you don't have PIMO :
+
+```bash
+echo '{"name":"Jane"}' | mimo <(echo '{"name":"John"}')
+```
+
 ### After process usage
 
 MIMO can also be used on existing file on disk.

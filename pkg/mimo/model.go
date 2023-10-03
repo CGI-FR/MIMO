@@ -87,7 +87,9 @@ func (m *Metrics) Update(
 	maskedType, maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if !realValueOk || !maskedValueOk {
-		return false
+		log.Panic().
+			Str("name", fieldname).
+			Msg(fmt.Sprintf("%s: real structure is %T, masked structure is %T", ErrDisparityStruct, realValue, maskedValue))
 	}
 
 	m.backend.IncreaseTotalCount()
@@ -364,13 +366,17 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 			if typedMaskedValue, ok := maskedRow[key].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
 			} else {
-				log.Warn().
+				log.Panic().
 					Strs("path", newpath).
-					Msg("ignored path because structure is different between real and masked data")
+					Msg(fmt.Sprintf("%s: real structure is object, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
 			}
 		case []any:
 			if typedMaskedValue, ok := maskedRow[key].([]any); ok {
 				r.UpdateArray(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
+			} else {
+				log.Panic().
+					Strs("path", newpath).
+					Msg(fmt.Sprintf("%s: real structure is array, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
 			}
 		case nil, any:
 			r.UpdateValue(root, typedRealValue, maskedRow[key], append(stack, realValue), newpath...)
@@ -391,14 +397,19 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 			if typedMaskedItem, ok := maskedArray[index].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
 			} else {
-				log.Warn().
+				log.Panic().
 					Strs("path", newpath).
 					Int("index", index).
-					Msg("ignored item in array at path because structure is different between real and masked data")
+					Msg(fmt.Sprintf("%s: real structure is object, masked structure is %T", ErrDisparityStruct, maskedArray[index]))
 			}
 		case []any:
 			if typedMaskedItem, ok := maskedArray[index].([]any); ok {
 				r.UpdateArray(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
+			} else {
+				log.Panic().
+					Strs("path", newpath).
+					Int("index", index).
+					Msg(fmt.Sprintf("%s: real structure is array, masked structure is %T", ErrDisparityStruct, maskedArray[index]))
 			}
 		case nil, any:
 			r.UpdateValue(root, typedRealItem, maskedArray[index], append(stack, realArray[index]), newpath...)

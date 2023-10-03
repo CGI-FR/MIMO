@@ -30,7 +30,10 @@ var (
 	ErrKeyNotFound = errors.New("key not found in multimap")
 
 	// ErrDisparityType is returned when real and masked value have different types.
-	ErrDisparityType = errors.New("can't validate value because type has changed")
+	ErrDisparityType = errors.New("can't analyze value because type has changed")
+
+	// ErrDisparityStruct is returned when real and masked value have different structure.
+	ErrDisparityStruct = errors.New("can't analyze row because structure has changed")
 
 	// ErrAnalyze is returned when a fatal error occurs during analyze.
 	ErrAnalyze = errors.New("fatal error")
