@@ -21,15 +21,17 @@ type Config struct {
 	ColumnNames       []string
 	ColumnConfigs     map[string]ColumnConfig
 	PreprocessConfigs []PreprocessConfig
+	IgnoreDisparities bool
 }
 
 type ColumnConfig struct {
-	Exclude         []any        // exclude values from the masking rate (default: exclude only nil values)
-	ExcludeTemplate *Template    // exclude values if template expression evaluate to True (default: False)
-	CoherentWith    []string     // list of fields use for coherent rate computation (default: the current field)
-	CoherentSource  *Template    // template to execute to create coherence source
-	Constraints     []Constraint // list of constraints to validate
-	Alias           string       // alias to use in persisted data
+	Exclude           []any        // exclude values from the masking rate (default: exclude only nil values)
+	ExcludeTemplate   *Template    // exclude values if template expression evaluate to True (default: False)
+	CoherentWith      []string     // list of fields use for coherent rate computation (default: the current field)
+	CoherentSource    *Template    // template to execute to create coherence source
+	Constraints       []Constraint // list of constraints to validate
+	Alias             string       // alias to use in persisted data
+	IgnoreDisparities bool
 
 	excluded bool
 }
@@ -68,17 +70,19 @@ func NewConfig() Config {
 		ColumnNames:       []string{},
 		ColumnConfigs:     map[string]ColumnConfig{},
 		PreprocessConfigs: []PreprocessConfig{},
+		IgnoreDisparities: false,
 	}
 }
 
 func NewDefaultColumnConfig() ColumnConfig {
 	return ColumnConfig{
-		Exclude:         []any{},
-		ExcludeTemplate: nil,
-		CoherentWith:    []string{},
-		CoherentSource:  nil,
-		Constraints:     []Constraint{},
-		Alias:           "",
-		excluded:        false,
+		Exclude:           []any{},
+		ExcludeTemplate:   nil,
+		CoherentWith:      []string{},
+		CoherentSource:    nil,
+		Constraints:       []Constraint{},
+		Alias:             "",
+		IgnoreDisparities: false,
+		excluded:          false,
 	}
 }

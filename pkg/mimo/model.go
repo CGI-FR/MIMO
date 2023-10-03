@@ -75,19 +75,23 @@ func NewMetrics(
 	}
 }
 
+//nolint:cyclop
 func (m *Metrics) Update(
 	fieldname string,
-	realValue any,
-	maskedValue any,
-	coherenceValue []any,
-	subs Suscribers,
-	config ColumnConfig,
+	realValue any, maskedValue any, coherenceValue []any,
+	subs Suscribers, config ColumnConfig,
 ) bool {
-	realValueStr, realValueOk := toString(realValue)
-	maskedValueStr, maskedValueOk := toString(maskedValue)
+	realType, realValueStr, realValueOk := toString(realValue)
+	maskedType, maskedValueStr, maskedValueOk := toString(maskedValue)
 
 	if !realValueOk || !maskedValueOk {
-		return false
+		if config.IgnoreDisparities {
+			return false
+		}
+
+		log.Panic().
+			Str("name", fieldname).
+			Msg(fmt.Sprintf("%s: real structure is %T, masked structure is %T", ErrDisparityStruct, realValue, maskedValue))
 	}
 
 	m.backend.IncreaseTotalCount()
@@ -114,6 +118,10 @@ func (m *Metrics) Update(
 		return true
 	}
 
+	if !config.IgnoreDisparities {
+		checkType(realType, maskedType, fieldname)
+	}
+
 	if excluded {
 		m.backend.IncreaseIgnoredCount()
 
@@ -129,6 +137,13 @@ func (m *Metrics) Update(
 	}
 
 	return true
+}
+
+func checkType(realType string, maskedType string, fieldname string) {
+	if realType != maskedType && maskedType != "nil" {
+		log.Panic().Str("name", fieldname).
+			Msg(fmt.Sprintf("%s: real value is %s, masked value is %s", ErrDisparityType, realType, maskedType))
+	}
 }
 
 func (m *Metrics) postNonMaskedValue(subs Suscribers, fieldname string, realValue any) {
@@ -354,14 +369,18 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 		case map[string]any:
 			if typedMaskedValue, ok := maskedRow[key].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
-			} else {
-				log.Warn().
+			} else if !r.config.IgnoreDisparities {
+				log.Panic().
 					Strs("path", newpath).
-					Msg("ignored path because structure is different between real and masked data")
+					Msg(fmt.Sprintf("%s: real structure is object, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
 			}
 		case []any:
 			if typedMaskedValue, ok := maskedRow[key].([]any); ok {
 				r.UpdateArray(root, typedRealValue, typedMaskedValue, append(stack, realValue), newpath...)
+			} else if !r.config.IgnoreDisparities {
+				log.Panic().
+					Strs("path", newpath).
+					Msg(fmt.Sprintf("%s: real structure is array, masked structure is %T", ErrDisparityStruct, maskedRow[key]))
 			}
 		case nil, any:
 			r.UpdateValue(root, typedRealValue, maskedRow[key], append(stack, realValue), newpath...)
@@ -373,6 +392,7 @@ func (r Report) UpdateDeep(root DataRow, realRow DataRow, maskedRow DataRow, sta
 	}
 }
 
+//nolint:cyclop
 func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, stack []any, path ...string) {
 	for index := 0; index < len(realArray) && index < len(maskedArray); index++ {
 		newpath := append(path, "[]") //nolint:gocritic
@@ -381,15 +401,20 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 		case map[string]any:
 			if typedMaskedItem, ok := maskedArray[index].(map[string]any); ok {
 				r.UpdateDeep(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
-			} else {
-				log.Warn().
+			} else if !r.config.IgnoreDisparities {
+				log.Panic().
 					Strs("path", newpath).
 					Int("index", index).
-					Msg("ignored item in array at path because structure is different between real and masked data")
+					Msg(fmt.Sprintf("%s: real structure is object, masked structure is %T", ErrDisparityStruct, maskedArray[index]))
 			}
 		case []any:
 			if typedMaskedItem, ok := maskedArray[index].([]any); ok {
 				r.UpdateArray(root, typedRealItem, typedMaskedItem, append(stack, realArray[index]), newpath...)
+			} else if !r.config.IgnoreDisparities {
+				log.Panic().
+					Strs("path", newpath).
+					Int("index", index).
+					Msg(fmt.Sprintf("%s: real structure is array, masked structure is %T", ErrDisparityStruct, maskedArray[index]))
 			}
 		case nil, any:
 			r.UpdateValue(root, typedRealItem, maskedArray[index], append(stack, realArray[index]), newpath...)
@@ -402,6 +427,7 @@ func (r Report) UpdateArray(root DataRow, realArray []any, maskedArray []any, st
 	}
 }
 
+//nolint:cyclop
 func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack []any, path ...string) {
 	key := strings.Join(path, ".")
 
@@ -433,6 +459,10 @@ func (r Report) UpdateValue(root DataRow, realValue any, maskedValue any, stack 
 		if exclude, err := strconv.ParseBool(result); exclude && err == nil {
 			config.excluded = true
 		}
+	}
+
+	if r.config.IgnoreDisparities {
+		config.IgnoreDisparities = true
 	}
 
 	if !metrics.Update(key, realValue, maskedValue, coherenceValues, r.subs, config) && !exists {
@@ -484,37 +514,39 @@ func (r Report) ColumnMetric(colname string) Metrics {
 	return r.Metrics[colname]
 }
 
-func toString(value any) (string, bool) {
-	var str string
+const (
+	Number = "number"
+	Bool   = "bool"
+	String = "string"
+	Nil    = "nil"
+)
+
+func toString(value any) (string, string, bool) {
 	switch tvalue := value.(type) {
 	case string:
-		str = strconv.Quote(tvalue)
+		return String, "string(" + tvalue + ")", true
 	case float64:
-		str = strconv.FormatFloat(tvalue, 'g', -1, 64)
+		return Number, "number(" + strconv.FormatFloat(tvalue, 'g', -1, 64) + ")", true
 	case bool:
-		str = strconv.FormatBool(tvalue)
+		return Bool, "bool(" + strconv.FormatBool(tvalue) + ")", true
 	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
-		str = fmt.Sprint(tvalue)
+		return Number, "number(" + fmt.Sprint(tvalue) + ")", true
 	case json.Number:
-		str = string(tvalue)
+		return Number, "number(" + string(tvalue) + ")", true
 	case nil:
-		str = "nil"
+		return Nil, "nil(nil)", true
 	default:
-		return "", false
+		return "", "", false
 	}
-
-	return str, true
 }
 
 func toStringSlice(values []any) string {
 	result := &strings.Builder{}
 
 	for _, value := range values {
-		if str, ok := toString(value); ok {
+		if _, str, ok := toString(value); ok {
 			result.WriteString(str)
 		}
-
-		result.WriteString("_")
 	}
 
 	return result.String()
@@ -543,7 +575,7 @@ func isExcluded(exclude []any, value any, valueStr string) bool {
 	}
 
 	for _, exVal := range exclude {
-		if exValStr, ok := toString(exVal); ok && valueStr == exValStr {
+		if _, exValStr, ok := toString(exVal); ok && valueStr == exValStr {
 			return true
 		}
 	}

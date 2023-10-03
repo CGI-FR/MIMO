@@ -21,9 +21,9 @@ testcases:
       - script: cat working/masked.jsonl | mimo --config ../configs/config_debug_constraint.yaml -verror working/real.jsonl
         assertions:
           - result.code ShouldEqual 1
-          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["\"Jane\"","\"John\""] real-value="\"John\"_"
-          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["\"Jane\"","\"John\""] real-value="\"Jane\"_"
-          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym="\"John\"" real-values=["\"Jane\"","\"John\""]
-          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym="\"Jane\"" real-values=["\"Jane\"","\"John\""]
+          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["string(Jane)","string(John)"] real-value=string(John)
+          - result.systemerr ShouldContainSubstring ERR sample value that failed coherence because it was attributed 2 pseudonyms pseudonyms=["string(Jane)","string(John)"] real-value=string(Jane)
+          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym=string(John) real-values=["string(Jane)","string(John)"]
+          - result.systemerr ShouldContainSubstring ERR sample value that failed identifiant because it was attributed 2 real-values pseudonym=string(Jane) real-values=["string(Jane)","string(John)"]
 
       - script: mv report.html ../reports/report_debug_constraints_yes.html

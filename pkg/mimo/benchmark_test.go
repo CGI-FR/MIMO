@@ -157,7 +157,8 @@ func BenchmarkAllOptions(b *testing.B) {
 	}
 
 	driver.Configure(mimo.Config{
-		ColumnNames: []string{"value"},
+		IgnoreDisparities: false,
+		ColumnNames:       []string{"value"},
 		ColumnConfigs: map[string]mimo.ColumnConfig{
 			"value": {
 				Exclude:         []any{"Odile", "Tiffany"},
@@ -171,7 +172,8 @@ func BenchmarkAllOptions(b *testing.B) {
 						Value:  .9,
 					},
 				},
-				Alias: "",
+				Alias:             "",
+				IgnoreDisparities: false,
 			},
 		},
 		PreprocessConfigs: []mimo.PreprocessConfig{

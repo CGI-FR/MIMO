@@ -1,0 +1,35 @@
+name: test on disparities
+testcases:
+  - name: error on type disparity
+    steps:
+      - script: echo '{"value":1}' > working/real.jsonl
+      - script: echo '{"value":"5"}' > working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 1
+          - result.systemerr ShouldContainSubstring real value is number, masked value is string
+
+  - name: error on struct disparity
+    steps:
+      - script: echo '{"value":1}' > working/real.jsonl
+      - script: echo '{"value":{"inner":"5"}}' > working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 1
+          - result.systemerr ShouldContainSubstring real structure is float64, masked structure is map[string]interface {}
+
+  - name: disable disparity checking
+    steps:
+      - script: echo '{"value":1}' > working/real.jsonl
+      - script: echo '{"value":2}' >> working/real.jsonl
+
+      - script: echo '{"value":"5"}' > working/masked.jsonl
+      - script: echo '{"value":{"inner":"5"}}' >> working/masked.jsonl
+
+      - script: cat working/masked.jsonl | mimo --ignore-disparities working/real.jsonl
+        assertions:
+          - result.code ShouldEqual 0
+
+      - script: rm report.html
