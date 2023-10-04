@@ -522,31 +522,60 @@ const (
 )
 
 func toString(value any) (string, string, bool) {
+	sb := &strings.Builder{}
+	sb.Grow(128) //nolint:gomnd
+	typestr, ok := toStringBuffered(value, sb)
+
+	return typestr, sb.String(), ok
+}
+
+func toStringBuffered(value any, stringbuffer *strings.Builder) (string, bool) {
 	switch tvalue := value.(type) {
 	case string:
-		return String, "string(" + tvalue + ")", true
-	case float64:
-		return Number, "number(" + strconv.FormatFloat(tvalue, 'g', -1, 64) + ")", true
+		stringbuffer.WriteString("string(")
+		stringbuffer.WriteString(tvalue)
+		stringbuffer.WriteByte(')')
+
+		return String, true
 	case bool:
-		return Bool, "bool(" + strconv.FormatBool(tvalue) + ")", true
+		stringbuffer.WriteString("bool(")
+		stringbuffer.WriteString(strconv.FormatBool(tvalue))
+		stringbuffer.WriteByte(')')
+
+		return Bool, true
+	case float64:
+		stringbuffer.WriteString("number(")
+		stringbuffer.WriteString(strconv.FormatFloat(tvalue, 'g', -1, 64))
+		stringbuffer.WriteByte(')')
+
+		return Number, true
 	case int, int64, int32, int16, int8, uint, uint64, uint32, uint16, uint8:
-		return Number, "number(" + fmt.Sprint(tvalue) + ")", true
+		stringbuffer.WriteString("number(")
+		stringbuffer.WriteString(fmt.Sprint(tvalue))
+		stringbuffer.WriteByte(')')
+
+		return Number, true
 	case json.Number:
-		return Number, "number(" + string(tvalue) + ")", true
+		stringbuffer.WriteString("number(")
+		stringbuffer.WriteString(string(tvalue))
+		stringbuffer.WriteByte(')')
+
+		return Number, true
 	case nil:
-		return Nil, "nil(nil)", true
+		stringbuffer.WriteString("nil(nil)")
+
+		return Nil, true
 	default:
-		return "", "", false
+		return "", false
 	}
 }
 
 func toStringSlice(values []any) string {
 	result := &strings.Builder{}
+	result.Grow(512) //nolint:gomnd
 
 	for _, value := range values {
-		if _, str, ok := toString(value); ok {
-			result.WriteString(str)
-		}
+		_, _ = toStringBuffered(value, result)
 	}
 
 	return result.String()
