@@ -127,7 +127,7 @@ To create a field before analysis of data, you can use the `preprocess` paramete
 ```yaml
 version: "1"
 preprocess:                                   # optional : list of fields to preprocess
-  - name: "idutil"                            # name of the field (can be nested with jsonpath notation)
+  - path: "idutil"                            # name of the field (can be nested with jsonpath notation)
     value: "{{.id}} - {{.name}} {{.surname}}" # template to compute the value of the field
 metrics:
   - name: "idutil"              # you can use preprocessed fields in the rest of the configuration
